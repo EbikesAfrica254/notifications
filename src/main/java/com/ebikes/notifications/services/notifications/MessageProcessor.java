@@ -1,16 +1,5 @@
 package com.ebikes.notifications.services.notifications;
 
-import static com.ebikes.notifications.constants.ApplicationConstants.SYSTEM_ID;
-import static com.ebikes.notifications.constants.EventConstants.EventTypes;
-import static com.ebikes.notifications.constants.EventConstants.RoutingKeys;
-
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.springframework.stereotype.Service;
-
 import com.ebikes.notifications.database.entities.Delivery;
 import com.ebikes.notifications.database.entities.Notification;
 import com.ebikes.notifications.dtos.events.incoming.NotificationRequest;
@@ -22,7 +11,6 @@ import com.ebikes.notifications.enums.ResponseCode;
 import com.ebikes.notifications.exceptions.ExternalServiceException;
 import com.ebikes.notifications.exceptions.InvalidStateException;
 import com.ebikes.notifications.exceptions.RateLimitException;
-import com.ebikes.notifications.exceptions.TimeoutException;
 import com.ebikes.notifications.publishers.AuditEventPublisher;
 import com.ebikes.notifications.services.channels.email.EmailChannelService;
 import com.ebikes.notifications.services.channels.sms.SmsChannelService;
@@ -31,9 +19,18 @@ import com.ebikes.notifications.services.channels.whatsapp.WhatsAppChannelServic
 import com.ebikes.notifications.services.deliveries.DeliveryService;
 import com.ebikes.notifications.services.preferences.UserPreferenceService;
 import com.ebikes.notifications.support.audit.AuditMetadataBuilder;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static com.ebikes.notifications.constants.ApplicationConstants.SYSTEM_ID;
+import static com.ebikes.notifications.constants.EventConstants.EventTypes;
+import static com.ebikes.notifications.constants.EventConstants.RoutingKeys;
 
 @RequiredArgsConstructor
 @Service
@@ -131,26 +128,6 @@ public class MessageProcessor {
               notification, Map.of("configuration", "CHANNEL_DISABLED")),
           notification.getOrganizationId(),
           ROUTING_KEY);
-
-    } catch (TimeoutException e) {
-      log.warn(
-          "Delivery timed out - serviceReference={} notification.getId()={} error={}",
-          request.serviceReference(),
-          notification.getId(),
-          e.getMessage());
-
-      deliveryService.recordTimeout(delivery.getId(), delivery.getAttemptNumber());
-      notificationService.scheduleRetry(notification.getId());
-
-      auditEventPublisher.publishFailure(
-          notification.getId(),
-          NOTIFICATIONS,
-          EventTypes.Notifications.FAILED,
-          e.getMessage(),
-          AuditMetadataBuilder.forNotification(notification),
-          notification.getOrganizationId(),
-          ROUTING_KEY);
-      throw e;
 
     } catch (RateLimitException e) {
       log.warn(
