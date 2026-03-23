@@ -22,7 +22,6 @@ public class EventConstants {
       public static final String CANCELLED = EventSource.HOST_SERVICE + ".notification.cancelled";
       public static final String DELIVERED = EventSource.HOST_SERVICE + ".notification.delivered";
       public static final String FAILED = EventSource.HOST_SERVICE + ".notification.failed";
-      public static final String SUPPRESSED = EventSource.HOST_SERVICE + ".notification.suppressed";
     }
 
     public static final class Preferences {
@@ -85,21 +84,6 @@ public class EventConstants {
     }
   }
 
-  public static final class InboxSourceContext {
-
-    private InboxSourceContext() {
-      // prevent instantiation
-    }
-
-    private static final String DELIMITER = ":";
-
-    public static final String IAM_SERVICE = "iam";
-
-    public static String getSourceContext(String serviceReference) {
-      return serviceReference.split(DELIMITER)[0];
-    }
-  }
-
   public static final class MessageHeaders {
 
     private MessageHeaders() {
@@ -120,11 +104,6 @@ public class EventConstants {
     private static final String IAM_HOST_SERVICE = "iam";
     private static final String ORGANIZATIONS_HOST_SERVICE = "organizations";
 
-    // outbound routing keys — pattern: <service>.<domain>.audit → matched by *.*.audit
-    public static final String NOTIFICATIONS_NOTIFICATION_AUDIT =
-        audit(EventSource.HOST_SERVICE + ".notification");
-    public static final String NOTIFICATIONS_PREFERENCE_AUDIT =
-        audit(EventSource.HOST_SERVICE + ".preference");
     public static final String NOTIFICATIONS_TEMPLATE_AUDIT =
         audit(EventSource.HOST_SERVICE + ".template");
 

@@ -66,7 +66,6 @@ public final class ApplicationConstants {
     public static final String SEND_SMS_PATH = "/sms/sendsms";
     public static final String STATUS_AUTH_INVALID_SENDER = "1001";
     public static final String STATUS_AUTH_INVALID_API_KEY = "1002";
-    public static final String STATUS_AUTH_ACCOUNT_INACTIVE = "1006";
     public static final String STATUS_LOW_CREDITS = "1004";
     public static final String STATUS_AUTH_IP_NOT_WHITELISTED = "1013";
     public static final String STATUS_AUTH_INVALID_ACCOUNT = "1014";

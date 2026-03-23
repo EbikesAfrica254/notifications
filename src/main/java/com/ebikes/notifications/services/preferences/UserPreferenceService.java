@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotBlank;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -46,11 +48,6 @@ public class UserPreferenceService {
 
   private static final String ROUTING_KEY = RoutingKeys.audit("preferences");
 
-  private static final Set<String> ALLOWED_SORT_FIELDS =
-      Set.of(
-          UserPreferenceSpecifications.FIELD_CATEGORY,
-          UserPreferenceSpecifications.FIELD_CHANNEL,
-          UserPreferenceSpecifications.FIELD_CREATED_AT);
   private static final String USER_PREFERENCE = "USER_PREFERENCE";
 
   private final AuditEventPublisher auditEventPublisher;
@@ -176,6 +173,16 @@ public class UserPreferenceService {
         preference.getOrganizationId(),
         ROUTING_KEY,
         ExecutionContext.getUserId());
+  }
+
+  @Transactional(readOnly = true)
+  public void existsByUserId(@NotBlank String userId) {
+    boolean exists = repository.existsByUserId(userId);
+    if (exists) {
+      return;
+    }
+    throw new ResourceNotFoundException(
+        ResponseCode.RESOURCE_NOT_FOUND, "User preference not found for userId=" + userId);
   }
 
   @Transactional(readOnly = true)

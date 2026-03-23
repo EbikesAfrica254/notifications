@@ -11,8 +11,4 @@ public class AuthorizationException extends BaseException {
   public AuthorizationException(ResponseCode code, String developerMessage) {
     super(code, developerMessage);
   }
-
-  public AuthorizationException(ResponseCode code, String developerMessage, Throwable cause) {
-    super(code, developerMessage, cause);
-  }
 }

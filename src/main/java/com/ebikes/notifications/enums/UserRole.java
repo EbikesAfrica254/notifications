@@ -1,8 +1,5 @@
 package com.ebikes.notifications.enums;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
 public enum UserRole {
   AGENT,
   BRANCH_ADMIN,
@@ -28,17 +25,5 @@ public enum UserRole {
     } catch (IllegalArgumentException e) {
       return null;
     }
-  }
-
-  public static Set<UserRole> fromStrings(Set<String> roles) {
-    return roles.stream().map(UserRole::fromString).collect(Collectors.toSet());
-  }
-
-  public static Set<String> getRoleNames(Set<UserRole> roles) {
-    return roles.stream().map(UserRole::name).collect(Collectors.toSet());
-  }
-
-  public static String toCommaSeparated(Set<UserRole> roles) {
-    return roles.stream().map(UserRole::name).sorted().collect(Collectors.joining(","));
   }
 }

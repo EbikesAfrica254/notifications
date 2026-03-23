@@ -15,6 +15,8 @@ public interface UserPreferenceRepository
     extends JpaRepository<UserChannelPreference, UUID>,
         JpaSpecificationExecutor<UserChannelPreference> {
 
+  boolean existsByUserId(String userId);
+
   List<UserChannelPreference> findByUserIdAndOrganizationId(String userId, String organizationId);
 
   Optional<UserChannelPreference> findByUserIdAndOrganizationIdAndChannelAndCategory(

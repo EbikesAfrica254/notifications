@@ -11,8 +11,4 @@ public class ResourceNotFoundException extends BaseException {
   public ResourceNotFoundException(ResponseCode code, String developerMessage) {
     super(code, developerMessage);
   }
-
-  public ResourceNotFoundException(ResponseCode code, String developerMessage, Throwable cause) {
-    super(code, developerMessage, cause);
-  }
 }

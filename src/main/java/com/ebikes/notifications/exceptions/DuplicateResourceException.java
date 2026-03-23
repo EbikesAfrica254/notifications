@@ -11,8 +11,4 @@ public class DuplicateResourceException extends BaseException {
   public DuplicateResourceException(ResponseCode code, String developerMessage) {
     super(code, developerMessage);
   }
-
-  public DuplicateResourceException(ResponseCode code, String developerMessage, Throwable cause) {
-    super(code, developerMessage, cause);
-  }
 }

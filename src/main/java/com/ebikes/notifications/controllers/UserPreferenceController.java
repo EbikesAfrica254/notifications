@@ -70,6 +70,7 @@ public class UserPreferenceController {
   @GetMapping
   public ResponseEntity<PaginatedResponse<UserPreferenceResponse>> search(
       @Valid @ModelAttribute ChannelPreferenceFilter filter, @PathVariable String userId) {
+    userPreferenceService.existsByUserId(userId);
     Page<UserPreferenceResponse> page = userPreferenceService.search(filter);
     return ResponseEntity.ok(
         PaginatedResponse.from("User preferences retrieved successfully.", page));

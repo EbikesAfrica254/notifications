@@ -30,14 +30,6 @@ spring:
               declareExchange: false
               queueNameGroupOnly: true
 
-  cache:
-    redis:
-      cache-null-values: false
-      enable-statistics: true
-      key-prefix: "notifications:"
-      time-to-live: ${CACHE_TTL}
-    type: redis
-
   data:
     redis:
       host: ${SPRING_REDIS_HOST}

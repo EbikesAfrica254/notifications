@@ -11,8 +11,4 @@ public class RateLimitException extends BaseException {
   public RateLimitException(ResponseCode code, String developerMessage) {
     super(code, developerMessage);
   }
-
-  public RateLimitException(ResponseCode code, String developerMessage, Throwable cause) {
-    super(code, developerMessage, cause);
-  }
 }
