@@ -98,14 +98,14 @@ management:
 notification:
   channels:
     email:
-      enabled: true
+      enabled: ${EMAIL_ENABLED:true}
       rate-limit: 500
       ses:
         endpoint: ${AWS_SES_ENDPOINT:}
         region: ${AWS_SES_REGION}
         sender-address: ${AWS_SES_SENDER_ADDRESS}
     sms:
-      enabled: false
+      enabled: ${SMS_ENABLED:true}
       rate-limit: 100
       taifa-mobile:
         api-key: ${TAIFA_MOBILE_API_KEY}
@@ -118,7 +118,7 @@ notification:
       heartbeat-interval: PT30S
       rate-limit: 1000
     whatsapp:
-      enabled: ${WHATSAPP_ENABLED}
+      enabled: ${WHATSAPP_ENABLED:true}
       meta:
         api-version: ${META_API_VERSION}
         app-id: ${META_APP_ID}
@@ -130,9 +130,7 @@ notification:
 security:
   public-endpoints:
     - /actuator/health
-    - /api-docs/**
-    - /swagger-ui/**
-    - /webjars/**
+    - /actuator/prometheus
   scopes:
     - email
     - openid
