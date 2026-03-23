@@ -32,13 +32,13 @@ spring:
 
   data:
     redis:
-      host: ${SPRING_REDIS_HOST}
-      password: ${SPRING_REDIS_PASSWORD}
-      port: ${SPRING_REDIS_PORT}
+      host: ${SPRING_DATA_REDIS_HOST}
+      password: ${SPRING_DATA_REDIS_PASSWORD}
+      port: ${SPRING_DATA_REDIS_PORT}
       repositories:
         enabled: false
       ssl:
-        enabled: ${SPRING_REDIS_SSL_ENABLED}
+        enabled: ${SPRING_DATA_REDIS_SSL_ENABLED}
 
   datasource:
     driver-class-name: org.postgresql.Driver
@@ -76,11 +76,6 @@ spring:
         jwt:
           issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
           jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI}
-
-aws:
-  credentials:
-    access-key: ${AWS_ACCESS_KEY}
-    secret-key: ${AWS_SECRET_KEY}
 
 encryption:
   key: ${ENCRYPTION_KEY}

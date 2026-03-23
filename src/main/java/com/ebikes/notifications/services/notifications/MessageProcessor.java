@@ -1,5 +1,16 @@
 package com.ebikes.notifications.services.notifications;
 
+import static com.ebikes.notifications.constants.ApplicationConstants.SYSTEM_ID;
+import static com.ebikes.notifications.constants.EventConstants.EventTypes;
+import static com.ebikes.notifications.constants.EventConstants.RoutingKeys;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
 import com.ebikes.notifications.database.entities.Delivery;
 import com.ebikes.notifications.database.entities.Notification;
 import com.ebikes.notifications.dtos.events.incoming.NotificationRequest;
@@ -19,18 +30,9 @@ import com.ebikes.notifications.services.channels.whatsapp.WhatsAppChannelServic
 import com.ebikes.notifications.services.deliveries.DeliveryService;
 import com.ebikes.notifications.services.preferences.UserPreferenceService;
 import com.ebikes.notifications.support.audit.AuditMetadataBuilder;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static com.ebikes.notifications.constants.ApplicationConstants.SYSTEM_ID;
-import static com.ebikes.notifications.constants.EventConstants.EventTypes;
-import static com.ebikes.notifications.constants.EventConstants.RoutingKeys;
 
 @RequiredArgsConstructor
 @Service
