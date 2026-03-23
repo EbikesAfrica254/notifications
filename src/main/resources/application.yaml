@@ -1,0 +1,144 @@
+server:
+  port: ${SERVER_PORT:8086}
+  servlet:
+    context-path: /ebikes-notifications
+
+spring:
+  application:
+    name: ebikes-notifications
+
+  cloud:
+    function:
+      definition: incomingEventConsumer
+    stream:
+      bindings:
+        incomingEventConsumer-in-0:
+          destination: ebikes.domain-events
+          group: ${RABBITMQ_CONSUMER_GROUP}
+          consumer:
+            back-off-initial-interval: ${RABBITMQ_CONSUMER_BACKOFF_INITIAL}
+            back-off-max-interval: ${RABBITMQ_CONSUMER_BACKOFF_MAX}
+            back-off-multiplier: ${RABBITMQ_CONSUMER_BACKOFF_MULTIPLIER}
+            max-attempts: ${RABBITMQ_CONSUMER_MAX_ATTEMPTS}
+        eventPublisher-out-0:
+          destination: ebikes.domain-events
+      rabbit:
+        bindings:
+          incomingEventConsumer-in-0:
+            consumer:
+              bindQueue: false
+              declareExchange: false
+              queueNameGroupOnly: true
+
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST}
+      password: ${SPRING_REDIS_PASSWORD}
+      port: ${SPRING_REDIS_PORT}
+      repositories:
+        enabled: false
+      ssl:
+        enabled: ${SPRING_REDIS_SSL_ENABLED}
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE}
+      minimum-idle: ${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: notifications
+        format_sql: false
+        show_sql: false
+
+  liquibase:
+    change-log: classpath:database/changelog.yaml
+    enabled: true
+    liquibase-schema: notifications
+    parameters:
+      searchPath: classpath:database/
+
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST}
+    port: ${SPRING_RABBITMQ_PORT}
+    username: ${SPRING_RABBITMQ_USERNAME}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
+          jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI}
+
+aws:
+  credentials:
+    access-key: ${AWS_ACCESS_KEY}
+    secret-key: ${AWS_SECRET_KEY}
+
+encryption:
+  key: ${ENCRYPTION_KEY}
+
+logging:
+  level:
+    root: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  endpoint:
+    health:
+      show-details: never
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+notification:
+  channels:
+    email:
+      enabled: true
+      rate-limit: 500
+      ses:
+        endpoint: ${AWS_SES_ENDPOINT:}
+        region: ${AWS_SES_REGION}
+        sender-address: ${AWS_SES_SENDER_ADDRESS}
+    sms:
+      enabled: false
+      rate-limit: 100
+      taifa-mobile:
+        api-key: ${TAIFA_MOBILE_API_KEY}
+        default-cost: ${TAIFA_MOBILE_DEFAULT_COST}
+        sender-name: ${TAIFA_MOBILE_SENDER_NAME}
+    sse:
+      connection-limit: 1000
+      connection-timeout: 600000
+      enabled: true
+      heartbeat-interval: PT30S
+      rate-limit: 1000
+    whatsapp:
+      enabled: ${WHATSAPP_ENABLED}
+      meta:
+        api-version: ${META_API_VERSION}
+        app-id: ${META_APP_ID}
+        app-secret: ${META_APP_SECRET}
+        phone-number-id: ${META_PHONE_NUMBER_ID}
+        system-user-token: ${META_SYSTEM_USER_TOKEN}
+      rate-limit: ${WHATSAPP_RATE_LIMIT}
+
+security:
+  public-endpoints:
+    - /actuator/health
+    - /api-docs/**
+    - /swagger-ui/**
+    - /webjars/**
+  scopes:
+    - email
+    - openid
+    - profile

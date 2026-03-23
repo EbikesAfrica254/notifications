@@ -1,0 +1,63 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01-templates
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: schema/01-templates.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 02-notifications
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: schema/02-notifications.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 03-organization-channel-preferences
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: schema/03-organization-channel-preferences.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 04-user-channel-preferences
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: schema/04-user-channel-preferences.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 05-deliveries
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: schema/05-deliveries.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 05-inbox
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: schema/06-inbox.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 06-outbox
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: schema/07-outbox.sql
+            relativeToChangelogFile: true

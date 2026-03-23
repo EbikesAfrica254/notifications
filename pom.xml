@@ -175,10 +175,9 @@
 
     <!-- liquibase for database schema versioning and migrations -->
     <dependency>
-      <groupId>org.liquibase</groupId>
-      <artifactId>liquibase-core</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-liquibase</artifactId>
     </dependency>
-
     <!-- postgresql jdbc driver for production database connectivity -->
     <dependency>
       <groupId>org.postgresql</groupId>
