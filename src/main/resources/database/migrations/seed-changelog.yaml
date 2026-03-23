@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01-seed-templates
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: seed/01-seed-templates.sql
+            relativeToChangelogFile: true
