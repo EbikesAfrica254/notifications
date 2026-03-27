@@ -14,7 +14,7 @@ Notifications are channel-agnostic by design: the same pipeline handles Email, S
 
 - Notification template management (create, version, activate/deactivate)
 - Inbound event deduplication via inbox idempotency table
-- User and organisation channel preference management
+- User and organization channel preference management
 - Notification creation, status lifecycle, and delivery attempt tracking
 - Multi-channel dispatch: Email (AWS SES), SMS (Taifa Mobile), WhatsApp (Meta), SSE
 - Outbox event log and retry management
