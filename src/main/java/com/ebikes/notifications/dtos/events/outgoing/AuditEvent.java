@@ -1,6 +1,6 @@
 package com.ebikes.notifications.dtos.events.outgoing;
 
-import static com.ebikes.notifications.constants.EventConstants.EventSource;
+import static com.ebikes.notifications.constants.EventConstants.Source;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -30,7 +30,7 @@ public record AuditEvent(
 
   public AuditEvent {
     metadata = metadata == null ? Map.of() : Map.copyOf(metadata);
-    serviceReference = serviceReference == null ? EventSource.serviceReference() : serviceReference;
+    serviceReference = serviceReference == null ? Source.serviceReference() : serviceReference;
     timestamp = timestamp == null ? Instant.now() : timestamp;
   }
 }

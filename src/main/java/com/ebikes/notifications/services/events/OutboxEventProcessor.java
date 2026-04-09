@@ -1,13 +1,15 @@
 package com.ebikes.notifications.services.events;
 
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.context.ApplicationContext;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ebikes.notifications.constants.ApplicationConstants;
-import com.ebikes.notifications.constants.EventConstants.MessageHeaders;
+import com.ebikes.notifications.constants.ApplicationConstants.MessageHeaders;
 import com.ebikes.notifications.database.entities.Outbox;
 import com.ebikes.notifications.database.repositories.OutboxRepository;
 
@@ -19,15 +21,20 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OutboxEventProcessor {
 
+  private final ApplicationContext applicationContext;
   private final OutboxRepository repository;
   private final StreamBridge streamBridge;
+
+  @Async
+  public void processAsync(Outbox outbox) {
+    applicationContext.getBean(OutboxEventProcessor.class).process(outbox);
+  }
 
   @Transactional
   public void process(Outbox outbox) {
     try {
       Message<?> message = buildMessage(outbox);
       boolean sent = streamBridge.send(ApplicationConstants.Outbox.BINDING_NAME, message);
-
       if (sent) {
         outbox.markSent();
         repository.save(outbox);
@@ -50,7 +57,6 @@ public class OutboxEventProcessor {
 
   private void handleFailure(Outbox outbox) {
     outbox.markFailed();
-
     if (outbox.getRetryCount() >= ApplicationConstants.Outbox.MAX_RETRY_COUNT) {
       outbox.markDeadLetter();
       log.error(
@@ -59,7 +65,6 @@ public class OutboxEventProcessor {
           outbox.getId(),
           outbox.getEventType());
     }
-
     repository.save(outbox);
   }
 

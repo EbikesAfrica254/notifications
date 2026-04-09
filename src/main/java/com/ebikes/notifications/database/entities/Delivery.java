@@ -24,13 +24,14 @@ import com.ebikes.notifications.database.entities.bases.BaseEntity;
 import com.ebikes.notifications.enums.DeliveryStatus;
 import com.ebikes.notifications.enums.ResponseCode;
 import com.ebikes.notifications.exceptions.InvalidStateException;
+import com.ebikes.notifications.support.audit.Auditable;
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @AttributeOverride(
     name = "createdAt",
@@ -43,6 +44,7 @@ import lombok.ToString;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SuperBuilder
 @Table(
     name = "deliveries",
     schema = "notifications",
@@ -57,7 +59,7 @@ import lombok.ToString;
       @Index(name = "idx_deliveries_time", columnList = "attempted_at")
     })
 @ToString(exclude = {"notification", "providerResponse", "errorMessage"})
-public class Delivery extends BaseEntity {
+public class Delivery extends BaseEntity implements Auditable {
 
   @Column(name = "attempt_number", nullable = false, updatable = false)
   private Integer attemptNumber;
@@ -77,9 +79,6 @@ public class Delivery extends BaseEntity {
   @Column(name = "error_message", columnDefinition = "TEXT")
   private String errorMessage;
 
-  @Column(name = "next_retry_at", columnDefinition = "TIMESTAMPTZ")
-  private OffsetDateTime nextRetryAt;
-
   @JoinColumn(name = "notification_id", nullable = false, updatable = false)
   @ManyToOne(fetch = FetchType.LAZY)
   private Notification notification;
@@ -97,25 +96,6 @@ public class Delivery extends BaseEntity {
   @Column(name = "status", nullable = false, length = 50)
   @Enumerated(EnumType.STRING)
   private DeliveryStatus status;
-
-  @Builder
-  public Delivery(Integer attemptNumber, Notification notification, String organizationId) {
-
-    if (attemptNumber == null) {
-      throw new IllegalArgumentException("Attempt number is required");
-    }
-    if (notification == null) {
-      throw new IllegalArgumentException("Notification is required");
-    }
-    if (organizationId == null || organizationId.isBlank()) {
-      throw new IllegalArgumentException("Organization ID is required");
-    }
-
-    this.attemptNumber = attemptNumber;
-    this.notification = notification;
-    this.organizationId = organizationId;
-    this.status = DeliveryStatus.PENDING;
-  }
 
   public void markDelivered(
       BigDecimal costAmount,
@@ -138,16 +118,12 @@ public class Delivery extends BaseEntity {
   }
 
   public void markFailed(
-      String errorCode,
-      String errorMessage,
-      Map<String, Serializable> providerResponse,
-      OffsetDateTime nextRetryAt) {
+      String errorCode, String errorMessage, Map<String, Serializable> providerResponse) {
     validateTransitionFromPending("FAILED");
     this.status = DeliveryStatus.FAILED;
     this.errorCode = errorCode;
     this.errorMessage = errorMessage;
     this.providerResponse = providerResponse;
-    this.nextRetryAt = nextRetryAt;
     this.completedAt = OffsetDateTime.now(ZoneOffset.UTC);
   }
 
@@ -159,18 +135,38 @@ public class Delivery extends BaseEntity {
     this.completedAt = OffsetDateTime.now(ZoneOffset.UTC);
   }
 
-  public void markRateLimited(OffsetDateTime nextRetryAt) {
-    validateTransitionFromPending("RATE_LIMITED");
-    this.status = DeliveryStatus.RATE_LIMITED;
-    this.nextRetryAt = nextRetryAt;
+  public void markOffline() {
+    validateTransitionFromPending("OFFLINE");
+    this.status = DeliveryStatus.OFFLINE;
     this.completedAt = OffsetDateTime.now(ZoneOffset.UTC);
   }
 
-  public void markTimeout(OffsetDateTime nextRetryAt) {
+  public void markRateLimited() {
+    validateTransitionFromPending("RATE_LIMITED");
+    this.status = DeliveryStatus.RATE_LIMITED;
+    this.completedAt = OffsetDateTime.now(ZoneOffset.UTC);
+  }
+
+  public void markTimeout() {
     validateTransitionFromPending("TIMEOUT");
     this.status = DeliveryStatus.TIMEOUT;
-    this.nextRetryAt = nextRetryAt;
     this.completedAt = OffsetDateTime.now(ZoneOffset.UTC);
+  }
+
+  @Override
+  public Map<String, String> toAuditMetadata() {
+    return Map.of(
+        "attemptNumber", String.valueOf(attemptNumber),
+        "organizationId", organizationId,
+        "status", status.name());
+  }
+
+  private void validateTransitionFromPending(String targetStatus) {
+    if (this.status != DeliveryStatus.PENDING) {
+      throw new InvalidStateException(
+          ResponseCode.INVALID_STATE,
+          "Cannot transition delivery to " + targetStatus + " from status=" + this.status);
+    }
   }
 
   @Override
@@ -189,13 +185,5 @@ public class Delivery extends BaseEntity {
   @Override
   public int hashCode() {
     return getClass().hashCode();
-  }
-
-  private void validateTransitionFromPending(String targetStatus) {
-    if (this.status != DeliveryStatus.PENDING) {
-      throw new InvalidStateException(
-          ResponseCode.INVALID_STATE,
-          "Cannot transition delivery to " + targetStatus + " from status=" + this.status);
-    }
   }
 }

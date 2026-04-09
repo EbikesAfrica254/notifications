@@ -1,7 +1,6 @@
 package com.ebikes.notifications.services.preferences;
 
-import static com.ebikes.notifications.constants.EventConstants.EventTypes;
-import static com.ebikes.notifications.constants.EventConstants.RoutingKeys;
+import static com.ebikes.notifications.constants.EventConstants.DomainEvents;
 import static com.ebikes.notifications.constants.PreferenceConstants.MANDATORY_CATEGORIES;
 
 import java.util.ArrayList;
@@ -21,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ebikes.notifications.database.entities.UserChannelPreference;
 import com.ebikes.notifications.database.repositories.UserPreferenceRepository;
 import com.ebikes.notifications.database.specifications.UserPreferenceSpecifications;
+import com.ebikes.notifications.dtos.events.incoming.NotificationRequest;
 import com.ebikes.notifications.dtos.internal.PreferenceKey;
 import com.ebikes.notifications.dtos.requests.filters.ChannelPreferenceFilter;
 import com.ebikes.notifications.dtos.requests.preferences.user.CreateUserPreferenceRequest;
@@ -33,8 +33,7 @@ import com.ebikes.notifications.exceptions.DuplicateResourceException;
 import com.ebikes.notifications.exceptions.InvalidStateException;
 import com.ebikes.notifications.exceptions.ResourceNotFoundException;
 import com.ebikes.notifications.mappers.UserPreferenceMapper;
-import com.ebikes.notifications.publishers.AuditEventPublisher;
-import com.ebikes.notifications.support.audit.AuditMetadataBuilder;
+import com.ebikes.notifications.support.audit.AuditTemplate;
 import com.ebikes.notifications.support.context.ExecutionContext;
 import com.ebikes.notifications.support.database.FilterUtilities;
 
@@ -46,45 +45,48 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class UserPreferenceService {
 
-  private static final String ROUTING_KEY = RoutingKeys.audit("preferences");
-
-  private static final String USER_PREFERENCE = "USER_PREFERENCE";
-
-  private final AuditEventPublisher auditEventPublisher;
+  private final AuditTemplate auditTemplate;
   private final OrganizationPreferenceService organizationPreferenceService;
   private final UserPreferenceMapper mapper;
   private final UserPreferenceRepository repository;
 
   @Transactional
   public UserPreferenceResponse create(String userId, CreateUserPreferenceRequest request) {
-    String organizationId = ExecutionContext.getActiveOrganization();
+    String organizationId =
+        switch (ExecutionContext.get()) {
+          case ExecutionContext.UserContext uc -> uc.activeOrganization();
+          case ExecutionContext.SystemContext ignored ->
+              throw new IllegalStateException("activeOrganization() called in system context");
+        };
 
     UserChannelPreference preference =
-        new UserChannelPreference(
-            request.category(), request.channel(), request.enabled(), organizationId, userId);
+        UserChannelPreference.builder()
+            .category(request.category())
+            .channel(request.channel())
+            .enabled(request.enabled())
+            .organizationId(organizationId)
+            .userId(userId)
+            .build();
 
     try {
-      UserChannelPreference saved = repository.save(preference);
-
-      log.info(
-          "User preference created - userId={} organizationId={} channel={} category={} enabled={}",
-          userId,
-          organizationId,
-          request.channel(),
-          request.category(),
-          saved.getEnabled());
-
-      auditEventPublisher.publishSuccess(
-          preference.getId(),
-          USER_PREFERENCE,
-          EventTypes.Preferences.User.CREATED,
-          AuditMetadataBuilder.forUserChannelPreference(preference),
-          preference.getOrganizationId(),
-          ROUTING_KEY,
-          ExecutionContext.getUserId());
-
+      UserChannelPreference saved =
+          auditTemplate.execute(
+              preference,
+              organizationId,
+              DomainEvents.Preferences.User.CREATED,
+              () -> {
+                UserChannelPreference result = repository.save(preference);
+                log.info(
+                    "User preference created - userId={} organizationId={} channel={} category={}"
+                        + " enabled={}",
+                    userId,
+                    organizationId,
+                    request.channel(),
+                    request.category(),
+                    result.getEnabled());
+                return result;
+              });
       return mapper.toResponse(saved);
-
     } catch (DataIntegrityViolationException ex) {
       throw new DuplicateResourceException(
           ResponseCode.DUPLICATE_RESOURCE,
@@ -112,24 +114,19 @@ public class UserPreferenceService {
       if (MANDATORY_CATEGORIES.contains(category)) {
         continue;
       }
-
       for (ChannelType channel : ChannelType.values()) {
         PreferenceKey key = new PreferenceKey(channel, category);
-
         if (existingKeys.contains(key)) {
           continue;
         }
-
-        UserChannelPreference preference =
+        newPreferences.add(
             UserChannelPreference.builder()
                 .category(category)
                 .channel(channel)
                 .enabled(true)
                 .organizationId(organizationId)
                 .userId(userId)
-                .build();
-
-        newPreferences.add(preference);
+                .build());
       }
     }
 
@@ -145,8 +142,13 @@ public class UserPreferenceService {
   }
 
   @Transactional
-  public void delete(
-      String userId, String organizationId, ChannelType channel, NotificationCategory category) {
+  public void delete(String userId, ChannelType channel, NotificationCategory category) {
+    String organizationId =
+        switch (ExecutionContext.get()) {
+          case ExecutionContext.UserContext uc -> uc.activeOrganization();
+          case ExecutionContext.SystemContext ignored ->
+              throw new IllegalStateException("activeOrganization() called in system context");
+        };
 
     if (MANDATORY_CATEGORIES.contains(category)) {
       throw new InvalidStateException(
@@ -156,33 +158,27 @@ public class UserPreferenceService {
     UserChannelPreference preference =
         findByCompositeKey(userId, organizationId, channel, category);
 
-    repository.delete(preference);
-
-    log.info(
-        "User preference deleted - userId={} organizationId={} channel={} category={}",
-        userId,
-        organizationId,
-        channel,
-        category);
-
-    auditEventPublisher.publishSuccess(
-        preference.getId(),
-        USER_PREFERENCE,
-        EventTypes.Preferences.User.DELETED,
-        AuditMetadataBuilder.forUserChannelPreference(preference),
+    auditTemplate.execute(
+        preference,
         preference.getOrganizationId(),
-        ROUTING_KEY,
-        ExecutionContext.getUserId());
+        DomainEvents.Preferences.User.DELETED,
+        () -> {
+          repository.delete(preference);
+          log.info(
+              "User preference deleted - userId={} organizationId={} channel={} category={}",
+              userId,
+              organizationId,
+              channel,
+              category);
+        });
   }
 
   @Transactional(readOnly = true)
   public void existsByUserId(@NotBlank String userId) {
-    boolean exists = repository.existsByUserId(userId);
-    if (exists) {
-      return;
+    if (!repository.existsByUserId(userId)) {
+      throw new ResourceNotFoundException(
+          ResponseCode.RESOURCE_NOT_FOUND, "User preference not found for userId=" + userId);
     }
-    throw new ResourceNotFoundException(
-        ResponseCode.RESOURCE_NOT_FOUND, "User preference not found for userId=" + userId);
   }
 
   @Transactional(readOnly = true)
@@ -197,14 +193,22 @@ public class UserPreferenceService {
 
   @Transactional(readOnly = true)
   public UserPreferenceResponse findByCompositeKeyResponse(
-      String userId, String organizationId, ChannelType channel, NotificationCategory category) {
+      String userId, ChannelType channel, NotificationCategory category) {
+    String organizationId =
+        switch (ExecutionContext.get()) {
+          case ExecutionContext.UserContext uc -> uc.activeOrganization();
+          case ExecutionContext.SystemContext ignored ->
+              throw new IllegalStateException("activeOrganization() called in system context");
+        };
     return mapper.toResponse(findByCompositeKey(userId, organizationId, channel, category));
   }
 
   @Transactional(readOnly = true)
-  public boolean isEnabled(
-      String organizationId, String userId, ChannelType channel, NotificationCategory category) {
-
+  public boolean isEnabled(NotificationRequest request) {
+    NotificationCategory category = request.category();
+    ChannelType channel = request.channel();
+    String organizationId = request.organizationId();
+    String userId = request.subjectUserId();
     if (MANDATORY_CATEGORIES.contains(category)) {
       log.debug(
           "Mandatory category - bypassing preference check channel={} category={}",
@@ -242,10 +246,15 @@ public class UserPreferenceService {
   @Transactional
   public UserPreferenceResponse update(
       String userId,
-      String organizationId,
       ChannelType channel,
       NotificationCategory category,
       UpdateUserPreferenceRequest request) {
+    String organizationId =
+        switch (ExecutionContext.get()) {
+          case ExecutionContext.UserContext uc -> uc.activeOrganization();
+          case ExecutionContext.SystemContext ignored ->
+              throw new IllegalStateException("activeOrganization() called in system context");
+        };
 
     UserChannelPreference preference =
         findByCompositeKey(userId, organizationId, channel, category);
@@ -256,25 +265,23 @@ public class UserPreferenceService {
       preference.disable();
     }
 
-    UserChannelPreference saved = repository.save(preference);
-
-    log.info(
-        "User preference updated - userId={} organizationId={} channel={} category={} enabled={}",
-        userId,
-        organizationId,
-        channel,
-        category,
-        request.enabled());
-
-    auditEventPublisher.publishSuccess(
-        preference.getId(),
-        USER_PREFERENCE,
-        EventTypes.Preferences.User.UPDATED,
-        AuditMetadataBuilder.forUserChannelPreference(saved),
-        preference.getOrganizationId(),
-        ROUTING_KEY,
-        ExecutionContext.getUserId());
-
+    UserChannelPreference saved =
+        auditTemplate.execute(
+            preference,
+            preference.getOrganizationId(),
+            DomainEvents.Preferences.User.UPDATED,
+            () -> {
+              UserChannelPreference result = repository.save(preference);
+              log.info(
+                  "User preference updated - userId={} organizationId={} channel={} category={}"
+                      + " enabled={}",
+                  userId,
+                  organizationId,
+                  channel,
+                  category,
+                  request.enabled());
+              return result;
+            });
     return mapper.toResponse(saved);
   }
 

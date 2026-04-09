@@ -53,7 +53,7 @@ public class OrganizationPreferenceController {
   @GetMapping("/{id}")
   public ResponseEntity<SuccessResponse<OrganizationPreferenceResponse>> findById(
       @PathVariable UUID id) {
-    OrganizationPreferenceResponse preference = organizationPreferenceService.findByIdResponse(id);
+    OrganizationPreferenceResponse preference = organizationPreferenceService.findById(id);
     return ResponseEntity.ok(SuccessResponse.of(preference));
   }
 

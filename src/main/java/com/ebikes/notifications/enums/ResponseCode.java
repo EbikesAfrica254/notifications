@@ -1,6 +1,6 @@
 package com.ebikes.notifications.enums;
 
-import static com.ebikes.notifications.constants.EventConstants.EventSource.HOST_SERVICE;
+import static com.ebikes.notifications.constants.EventConstants.Source.HOST_SERVICE;
 
 import org.springframework.http.HttpStatus;
 
@@ -19,13 +19,13 @@ public enum ResponseCode {
   DUPLICATE_RESOURCE("DUPLICATE_RESOURCE", "Duplicate resource detected.", HttpStatus.CONFLICT),
   EXTERNAL_SERVICE_ERROR(
       "EXTERNAL_SERVICE_ERROR",
-      "An error occurred while communicating with an external service.",
+      "An error occurred while communicating with an external services.",
       HttpStatus.INTERNAL_SERVER_ERROR),
   FORBIDDEN(
       "FORBIDDEN", "You do not have permission to perform this operation.", HttpStatus.FORBIDDEN),
   GATEWAY_TIMEOUT(
       "GATEWAY_TIMEOUT",
-      "The external service did not respond in time.",
+      "The external services did not respond in time.",
       HttpStatus.GATEWAY_TIMEOUT),
   INSUFFICIENT_SCOPE(
       "INSUFFICIENT_SCOPE",
@@ -53,7 +53,7 @@ public enum ResponseCode {
   RESOURCE_NOT_FOUND(
       "RESOURCE_NOT_FOUND", "The specified resource does not exist.", HttpStatus.NOT_FOUND),
 
-  // service-scoped — prefixed with service identifier
+  // services-scoped — prefixed with services identifier
   INVALID_RECIPIENT(
       HOST_SERVICE + ".INVALID_RECIPIENT",
       "The recipient address is invalid or undeliverable.",

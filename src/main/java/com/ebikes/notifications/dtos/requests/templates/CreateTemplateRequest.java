@@ -11,12 +11,12 @@ import jakarta.validation.constraints.Size;
 
 import com.ebikes.notifications.database.models.TemplateVariable;
 import com.ebikes.notifications.enums.ChannelType;
-import com.ebikes.notifications.enums.ContentType;
+import com.ebikes.notifications.enums.TemplateContentType;
 
 public record CreateTemplateRequest(
     @NotBlank String bodyTemplate,
     @NotNull ChannelType channel,
-    @NotNull ContentType contentType,
+    @NotNull TemplateContentType templateContentType,
     @NotBlank @Size(min = 3, max = 100) @Pattern(regexp = "^[A-Z][A-Z0-9_]{2,99}$") String name,
     @Size(max = 500) String subject,
     @NotNull @Valid List<TemplateVariable> variableDefinitions)

@@ -11,13 +11,13 @@ import org.springframework.data.jpa.domain.Specification;
 import com.ebikes.notifications.database.entities.Template;
 import com.ebikes.notifications.dtos.requests.filters.TemplateFilter;
 import com.ebikes.notifications.enums.ChannelType;
-import com.ebikes.notifications.enums.ContentType;
+import com.ebikes.notifications.enums.TemplateContentType;
 import com.ebikes.notifications.support.database.FilterUtilities;
 
 public final class TemplateSpecifications {
 
   public static final String FIELD_CHANNEL = "channel";
-  public static final String FIELD_CONTENT_TYPE = "contentType";
+  public static final String FIELD_CONTENT_TYPE = "templateContentType";
   public static final String FIELD_CREATED_AT = "createdAt";
   public static final String FIELD_IS_ACTIVE = "isActive";
   public static final String FIELD_NAME = "name";
@@ -32,9 +32,6 @@ public final class TemplateSpecifications {
   public static Specification<Template> buildSpecification(TemplateFilter filter) {
     return (root, query, criteriaBuilder) -> {
       List<Predicate> predicates = new ArrayList<>();
-
-      predicates.add(
-          AuthorizationSpecifications.forTemplates().toPredicate(root, query, criteriaBuilder));
 
       FilterUtilities.addIfPresent(
           predicates, root, query, criteriaBuilder, filter.getName(), hasName(filter.getName()));
@@ -52,8 +49,8 @@ public final class TemplateSpecifications {
           root,
           query,
           criteriaBuilder,
-          filter.getContentType(),
-          hasContentType(filter.getContentType()));
+          filter.getTemplateContentType(),
+          hasTemplateContentType(filter.getTemplateContentType()));
 
       FilterUtilities.addIfPresent(
           predicates,
@@ -72,18 +69,19 @@ public final class TemplateSpecifications {
         criteriaBuilder.equal(root.get(FIELD_CHANNEL), channel);
   }
 
-  public static Specification<Template> hasContentType(ContentType contentType) {
+  public static Specification<Template> hasTemplateContentType(
+      TemplateContentType templateContentType) {
     return (root, query, criteriaBuilder) ->
-        criteriaBuilder.equal(root.get(FIELD_CONTENT_TYPE), contentType);
+        criteriaBuilder.equal(root.get(FIELD_CONTENT_TYPE), templateContentType);
   }
 
   public static Specification<Template> hasName(String name) {
     return FilterUtilities.likeIgnoreCase(FIELD_NAME, name);
   }
 
-  public static Specification<Template> isActive(boolean active) {
+  public static Specification<Template> isActive(Boolean active) {
     return (root, query, criteriaBuilder) ->
-        active
+        Boolean.TRUE.equals(active)
             ? criteriaBuilder.isTrue(root.get(FIELD_IS_ACTIVE))
             : criteriaBuilder.isFalse(root.get(FIELD_IS_ACTIVE));
   }

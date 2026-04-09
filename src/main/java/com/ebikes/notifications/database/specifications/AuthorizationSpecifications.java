@@ -13,12 +13,12 @@ import org.springframework.data.jpa.domain.Specification;
 import com.ebikes.notifications.database.entities.Delivery;
 import com.ebikes.notifications.database.entities.Notification;
 import com.ebikes.notifications.database.entities.OrganizationChannelPreference;
-import com.ebikes.notifications.database.entities.Template;
 import com.ebikes.notifications.database.entities.UserChannelPreference;
 import com.ebikes.notifications.enums.ResponseCode;
 import com.ebikes.notifications.enums.UserRole;
 import com.ebikes.notifications.exceptions.AuthorizationException;
 import com.ebikes.notifications.support.context.ExecutionContext;
+import com.ebikes.notifications.support.context.ExecutionContext.UserContext;
 import com.ebikes.notifications.support.security.RBACUtilities;
 
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +50,7 @@ public class AuthorizationSpecifications {
   }
 
   public static Specification<OrganizationChannelPreference> forOrganizationPreferences() {
-    Set<UserRole> roles = RBACUtilities.parseRoles(ExecutionContext.getRoles());
+    Set<UserRole> roles = extractRoles();
 
     if (RBACUtilities.hasSystemAdminRole(roles)) {
       log.debug("SYSTEM_ADMIN access: returning all organization preferences without filtering");
@@ -61,18 +61,8 @@ public class AuthorizationSpecifications {
     return filterByOrganizationId(activeOrganization);
   }
 
-  public static Specification<Template> forTemplates() {
-    Set<UserRole> roles = RBACUtilities.parseRoles(ExecutionContext.getRoles());
-
-    if (!RBACUtilities.hasSystemAdminRole(roles)) {
-      throw new AuthorizationException(ResponseCode.FORBIDDEN, "Unauthorized access");
-    }
-
-    return noFilter();
-  }
-
   public static Specification<UserChannelPreference> forUserPreferences() {
-    Set<UserRole> roles = RBACUtilities.parseRoles(ExecutionContext.getRoles());
+    Set<UserRole> roles = extractRoles();
 
     if (RBACUtilities.hasSystemAdminRole(roles)) {
       log.debug("SYSTEM_ADMIN access: returning all user preferences without filtering");
@@ -94,8 +84,7 @@ public class AuthorizationSpecifications {
   }
 
   @SuppressWarnings("unchecked")
-  static Join<Delivery, Notification> notificationJoin(Root<Delivery> root) {
-
+  public static Join<Delivery, Notification> notificationJoin(Root<Delivery> root) {
     return root.getJoins().stream()
         .filter(j -> j.getAttribute().getName().equals(NOTIFICATION_ASSOCIATION))
         .map(j -> (Join<Delivery, Notification>) j)
@@ -123,7 +112,7 @@ public class AuthorizationSpecifications {
       Function<String, Specification<T>> branchFilter,
       BiFunction<String, String, Specification<T>> recipientFilter) {
 
-    Set<UserRole> roles = RBACUtilities.parseRoles(ExecutionContext.getRoles());
+    Set<UserRole> roles = extractRoles();
 
     if (RBACUtilities.hasSystemAdminRole(roles)) {
       log.debug("SYSTEM_ADMIN access: returning all {} without filtering", resourceType);
@@ -148,13 +137,24 @@ public class AuthorizationSpecifications {
     }
 
     String userEmail = validateUserEmail();
-    String userPhoneNumber = ExecutionContext.getPhoneNumber();
+    String userPhoneNumber =
+        switch (ExecutionContext.get()) {
+          case UserContext uc -> uc.phoneNumber();
+          case ExecutionContext.SystemContext ignored -> null;
+        };
 
     log.debug("USER-level access: filtering by organizationId={} recipient", activeOrganization);
 
     return Specification.allOf(
         organizationFilter.apply(activeOrganization),
         recipientFilter.apply(userEmail, userPhoneNumber));
+  }
+
+  private static Set<UserRole> extractRoles() {
+    return switch (ExecutionContext.get()) {
+      case UserContext uc -> RBACUtilities.parseRoles(uc.roles());
+      case ExecutionContext.SystemContext ignored -> Set.of();
+    };
   }
 
   private static <T> Specification<T> filterByOrganizationId(String organizationId) {
@@ -219,42 +219,46 @@ public class AuthorizationSpecifications {
   }
 
   private static String validateActiveOrganization(String resourceType) {
-    String activeOrganization = ExecutionContext.getActiveOrganization();
-    if (activeOrganization == null || activeOrganization.isBlank()) {
-      log.error("Missing active_organization claim for {} access", resourceType);
-      throw new AuthorizationException(
-          ResponseCode.FORBIDDEN, "Active organization context required for this operation");
+    if (ExecutionContext.get() instanceof UserContext uc
+        && uc.activeOrganization() != null
+        && !uc.activeOrganization().isBlank()) {
+      return uc.activeOrganization();
     }
-    return activeOrganization;
+    log.error("Missing active_organization claim for {} access", resourceType);
+    throw new AuthorizationException(
+        ResponseCode.FORBIDDEN, "Active organization context required for this operation");
   }
 
   private static String validateActiveBranch(String resourceType) {
-    String activeBranch = ExecutionContext.getActiveBranch();
-    if (activeBranch == null || activeBranch.isBlank()) {
-      log.error("Missing active_branch claim for {} access", resourceType);
-      throw new AuthorizationException(
-          ResponseCode.FORBIDDEN, "Active branch context required for this operation");
+    if (ExecutionContext.get() instanceof UserContext uc
+        && uc.activeBranch() != null
+        && !uc.activeBranch().isBlank()) {
+      return uc.activeBranch();
     }
-    return activeBranch;
+    log.error("Missing active_branch claim for {} access", resourceType);
+    throw new AuthorizationException(
+        ResponseCode.FORBIDDEN, "Active branch context required for this operation");
   }
 
   private static String validateCurrentUser() {
-    String currentUserId = ExecutionContext.getUserId();
-    if (currentUserId == null || currentUserId.isBlank()) {
-      log.error("Missing user_id claim");
-      throw new AuthorizationException(
-          ResponseCode.FORBIDDEN, "User context required for this operation");
+    if (ExecutionContext.get() instanceof UserContext uc
+        && uc.userId() != null
+        && !uc.userId().isBlank()) {
+      return uc.userId();
     }
-    return currentUserId;
+    log.error("Missing user_id claim");
+    throw new AuthorizationException(
+        ResponseCode.FORBIDDEN, "User context required for this operation");
   }
 
   private static String validateUserEmail() {
-    String email = ExecutionContext.getEmail();
-    if (email == null || email.isBlank()) {
-      log.error("Missing email claim");
-      throw new AuthorizationException(
-          ResponseCode.FORBIDDEN, "User email required for this operation");
+    if (ExecutionContext.get() instanceof UserContext uc
+        && uc.email() != null
+        && !uc.email().isBlank()) {
+      return uc.email();
     }
-    return email;
+    log.error("Missing email claim");
+    throw new AuthorizationException(
+        ResponseCode.FORBIDDEN, "User email required for this operation");
   }
 }

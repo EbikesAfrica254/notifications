@@ -1,6 +1,7 @@
 package com.ebikes.notifications.database.entities;
 
 import java.util.List;
+import java.util.Map;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,17 +21,19 @@ import org.hibernate.annotations.Type;
 import com.ebikes.notifications.database.entities.bases.AuditableEntity;
 import com.ebikes.notifications.database.models.TemplateVariable;
 import com.ebikes.notifications.enums.ChannelType;
-import com.ebikes.notifications.enums.ContentType;
+import com.ebikes.notifications.enums.TemplateContentType;
+import com.ebikes.notifications.support.audit.Auditable;
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SuperBuilder
 @Table(
     name = "templates",
     schema = "notifications",
@@ -38,7 +41,7 @@ import lombok.NoArgsConstructor;
       @Index(name = "idx_templates_lookup", columnList = "name, is_active"),
       @Index(name = "idx_templates_channel", columnList = "channel, is_active")
     })
-public class Template extends AuditableEntity {
+public class Template extends AuditableEntity implements Auditable {
 
   @Column(name = "body_template", nullable = false, columnDefinition = "TEXT")
   @NotBlank(message = "Body template is required") private String bodyTemplate;
@@ -47,9 +50,9 @@ public class Template extends AuditableEntity {
   @Enumerated(EnumType.STRING)
   @NotNull(message = "Channel is required") private ChannelType channel;
 
-  @Column(name = "content_type", nullable = false, length = 50)
+  @Column(name = "template_content_type", nullable = false, length = 50)
   @Enumerated(EnumType.STRING)
-  @NotNull(message = "Content type is required") private ContentType contentType;
+  @NotNull(message = "Content type is required") private TemplateContentType templateContentType;
 
   @Column(name = "is_active", nullable = false)
   private boolean isActive;
@@ -71,24 +74,6 @@ public class Template extends AuditableEntity {
   @Version
   private int version;
 
-  @Builder
-  public Template(
-      String bodyTemplate,
-      ChannelType channel,
-      ContentType contentType,
-      String name,
-      String subject,
-      List<TemplateVariable> variableDefinitions) {
-    this.bodyTemplate = bodyTemplate;
-    this.channel = channel;
-    this.contentType = contentType;
-    this.isActive = true;
-    this.name = name;
-    this.subject = subject;
-    this.variableDefinitions =
-        variableDefinitions != null ? List.copyOf(variableDefinitions) : List.of();
-  }
-
   public void activate() {
     this.isActive = true;
   }
@@ -109,10 +94,10 @@ public class Template extends AuditableEntity {
   }
 
   @AssertTrue(message = "HTML content type is only permitted for EMAIL channel") private boolean isContentTypeValidForChannel() {
-    if (channel == null || contentType == null) {
+    if (channel == null || templateContentType == null) {
       return true;
     }
-    return contentType != ContentType.HTML || channel == ChannelType.EMAIL;
+    return templateContentType != TemplateContentType.HTML || channel == ChannelType.EMAIL;
   }
 
   @AssertTrue(
@@ -137,5 +122,13 @@ public class Template extends AuditableEntity {
       case EMAIL -> bodyTemplate.length() <= 102_400;
       case WHATSAPP -> bodyTemplate.length() <= 1_024;
     };
+  }
+
+  @Override
+  public Map<String, String> toAuditMetadata() {
+    return Map.of(
+        "channel", channel.name(),
+        "name", name,
+        "version", String.valueOf(version));
   }
 }

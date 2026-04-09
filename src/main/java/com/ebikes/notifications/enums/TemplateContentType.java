@@ -1,6 +1,7 @@
 package com.ebikes.notifications.enums;
 
-public enum ContentType {
+public enum TemplateContentType {
   HTML,
+  JSON,
   PLAIN_TEXT
 }

@@ -1,7 +1,6 @@
 package com.ebikes.notifications.services.preferences;
 
-import static com.ebikes.notifications.constants.EventConstants.EventTypes;
-import static com.ebikes.notifications.constants.EventConstants.RoutingKeys;
+import static com.ebikes.notifications.constants.EventConstants.DomainEvents;
 import static com.ebikes.notifications.constants.PreferenceConstants.MANDATORY_CATEGORIES;
 
 import java.util.ArrayList;
@@ -32,8 +31,7 @@ import com.ebikes.notifications.exceptions.DuplicateResourceException;
 import com.ebikes.notifications.exceptions.InvalidStateException;
 import com.ebikes.notifications.exceptions.ResourceNotFoundException;
 import com.ebikes.notifications.mappers.OrganizationPreferenceMapper;
-import com.ebikes.notifications.publishers.AuditEventPublisher;
-import com.ebikes.notifications.support.audit.AuditMetadataBuilder;
+import com.ebikes.notifications.support.audit.AuditTemplate;
 import com.ebikes.notifications.support.context.ExecutionContext;
 import com.ebikes.notifications.support.database.FilterUtilities;
 
@@ -45,42 +43,45 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OrganizationPreferenceService {
 
-  private static final String ORGANIZATION_PREFERENCE = "ORGANIZATION_PREFERENCE";
-  private static final String ROUTING_KEY = RoutingKeys.audit("preferences");
-
-  private final AuditEventPublisher auditEventPublisher;
+  private final AuditTemplate auditTemplate;
   private final OrganizationPreferenceMapper mapper;
   private final OrganizationPreferenceRepository repository;
 
   @Transactional
   public OrganizationPreferenceResponse create(CreateOrganizationPreferenceRequest request) {
-    String organizationId = ExecutionContext.getActiveOrganization();
+    String organizationId =
+        switch (ExecutionContext.get()) {
+          case ExecutionContext.UserContext uc -> uc.activeOrganization();
+          case ExecutionContext.SystemContext ignored ->
+              throw new IllegalStateException("activeOrganization() called in system context");
+        };
 
     OrganizationChannelPreference preference =
-        new OrganizationChannelPreference(
-            request.category(), request.channel(), request.enabled(), organizationId);
+        OrganizationChannelPreference.builder()
+            .category(request.category())
+            .channel(request.channel())
+            .enabled(request.enabled())
+            .organizationId(organizationId)
+            .build();
 
     try {
-      OrganizationChannelPreference saved = repository.save(preference);
-
-      log.info(
-          "Organization preference created - organizationId={} channel={} category={} enabled={}",
-          organizationId,
-          request.channel(),
-          request.category(),
-          saved.getEnabled());
-
-      auditEventPublisher.publishSuccess(
-          preference.getId(),
-          ORGANIZATION_PREFERENCE,
-          EventTypes.Preferences.Organization.CREATED,
-          AuditMetadataBuilder.forOrganizationChannelPreference(saved),
-          organizationId,
-          ROUTING_KEY,
-          ExecutionContext.getUserId());
-
+      OrganizationChannelPreference saved =
+          auditTemplate.execute(
+              preference,
+              organizationId,
+              DomainEvents.Preferences.Organization.CREATED,
+              () -> {
+                OrganizationChannelPreference result = repository.save(preference);
+                log.info(
+                    "Organization preference created - organizationId={} channel={} category={}"
+                        + " enabled={}",
+                    organizationId,
+                    request.channel(),
+                    request.category(),
+                    result.getEnabled());
+                return result;
+              });
       return mapper.toResponse(saved);
-
     } catch (DataIntegrityViolationException ex) {
       throw new DuplicateResourceException(
           ResponseCode.DUPLICATE_RESOURCE,
@@ -106,14 +107,11 @@ public class OrganizationPreferenceService {
       if (MANDATORY_CATEGORIES.contains(category)) {
         continue;
       }
-
       for (ChannelType channel : ChannelType.values()) {
         PreferenceKey key = new PreferenceKey(channel, category);
-
         if (existingKeys.contains(key)) {
           continue;
         }
-
         newPreferences.add(
             OrganizationChannelPreference.builder()
                 .category(category)
@@ -136,7 +134,7 @@ public class OrganizationPreferenceService {
 
   @Transactional
   public void delete(UUID id) {
-    OrganizationChannelPreference preference = findById(id);
+    OrganizationChannelPreference preference = requiredById(id);
 
     if (MANDATORY_CATEGORIES.contains(preference.getCategory())) {
       throw new InvalidStateException(
@@ -144,23 +142,19 @@ public class OrganizationPreferenceService {
           "Cannot delete mandatory category preference: " + preference.getCategory());
     }
 
-    repository.delete(preference);
-
-    log.info(
-        "Organization preference deleted - id={} organizationId={} channel={} category={}",
-        id,
+    auditTemplate.execute(
+        preference,
         preference.getOrganizationId(),
-        preference.getChannel(),
-        preference.getCategory());
-
-    auditEventPublisher.publishSuccess(
-        preference.getId(),
-        ORGANIZATION_PREFERENCE,
-        EventTypes.Preferences.Organization.DELETED,
-        AuditMetadataBuilder.forOrganizationChannelPreference(preference),
-        preference.getOrganizationId(),
-        ROUTING_KEY,
-        ExecutionContext.getUserId());
+        DomainEvents.Preferences.Organization.DELETED,
+        () -> {
+          repository.delete(preference);
+          log.info(
+              "Organization preference deleted - id={} organizationId={} channel={} category={}",
+              id,
+              preference.getOrganizationId(),
+              preference.getChannel(),
+              preference.getCategory());
+        });
   }
 
   @Transactional(readOnly = true)
@@ -175,8 +169,8 @@ public class OrganizationPreferenceService {
   }
 
   @Transactional(readOnly = true)
-  public OrganizationPreferenceResponse findByIdResponse(UUID id) {
-    return mapper.toResponse(findById(id));
+  public OrganizationPreferenceResponse findById(UUID id) {
+    return mapper.toResponse(requiredById(id));
   }
 
   @Transactional(readOnly = true)
@@ -191,7 +185,7 @@ public class OrganizationPreferenceService {
   @Transactional
   public OrganizationPreferenceResponse update(
       UUID id, UpdateOrganizationPreferenceRequest request) {
-    OrganizationChannelPreference preference = findById(id);
+    OrganizationChannelPreference preference = requiredById(id);
 
     if (Boolean.TRUE.equals(request.enabled())) {
       preference.enable();
@@ -199,30 +193,27 @@ public class OrganizationPreferenceService {
       preference.disable();
     }
 
-    OrganizationChannelPreference saved = repository.save(preference);
-
-    log.info(
-        "Organization preference updated - id={} organizationId={} channel={} category={}"
-            + " enabled={}",
-        id,
-        preference.getOrganizationId(),
-        preference.getChannel(),
-        preference.getCategory(),
-        request.enabled());
-
-    auditEventPublisher.publishSuccess(
-        preference.getId(),
-        ORGANIZATION_PREFERENCE,
-        EventTypes.Preferences.Organization.UPDATED,
-        AuditMetadataBuilder.forOrganizationChannelPreference(saved),
-        preference.getOrganizationId(),
-        ROUTING_KEY,
-        ExecutionContext.getUserId());
-
+    OrganizationChannelPreference saved =
+        auditTemplate.execute(
+            preference,
+            preference.getOrganizationId(),
+            DomainEvents.Preferences.Organization.UPDATED,
+            () -> {
+              OrganizationChannelPreference result = repository.save(preference);
+              log.info(
+                  "Organization preference updated - id={} organizationId={} channel={} category={}"
+                      + " enabled={}",
+                  id,
+                  preference.getOrganizationId(),
+                  preference.getChannel(),
+                  preference.getCategory(),
+                  request.enabled());
+              return result;
+            });
     return mapper.toResponse(saved);
   }
 
-  private OrganizationChannelPreference findById(UUID id) {
+  private OrganizationChannelPreference requiredById(UUID id) {
     return repository
         .findById(id)
         .orElseThrow(

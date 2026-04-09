@@ -1,9 +1,8 @@
 package com.ebikes.notifications.services.templates;
 
-import static com.ebikes.notifications.constants.ApplicationConstants.SYSTEM_ID;
-import static com.ebikes.notifications.constants.EventConstants.EventTypes;
-import static com.ebikes.notifications.constants.EventConstants.RoutingKeys;
+import static com.ebikes.notifications.constants.EventConstants.DomainEvents;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -25,9 +24,7 @@ import com.ebikes.notifications.enums.ResponseCode;
 import com.ebikes.notifications.exceptions.DuplicateResourceException;
 import com.ebikes.notifications.exceptions.ResourceNotFoundException;
 import com.ebikes.notifications.mappers.TemplateMapper;
-import com.ebikes.notifications.publishers.AuditEventPublisher;
-import com.ebikes.notifications.support.audit.AuditMetadataBuilder;
-import com.ebikes.notifications.support.context.ExecutionContext;
+import com.ebikes.notifications.support.audit.AuditTemplate;
 import com.ebikes.notifications.support.database.FilterUtilities;
 
 import lombok.RequiredArgsConstructor;
@@ -38,9 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TemplateService {
 
-  private static final String TEMPLATE = "TEMPLATE";
-
-  private final AuditEventPublisher auditEventPublisher;
+  private final AuditTemplate auditTemplate;
   private final TemplateMapper mapper;
   private final TemplateRepository repository;
 
@@ -48,19 +43,17 @@ public class TemplateService {
   public TemplateResponse activate(UUID id) {
     Template template = findTemplateById(id);
     template.activate();
-    Template saved = repository.save(template);
 
-    log.info("Template activated - id={} name={}", id, template.getName());
-
-    auditEventPublisher.publishSuccess(
-        template.getId(),
-        TEMPLATE,
-        EventTypes.Templates.ACTIVATED,
-        AuditMetadataBuilder.forTemplate(saved),
-        SYSTEM_ID,
-        RoutingKeys.NOTIFICATIONS_TEMPLATE_AUDIT,
-        ExecutionContext.getUserId());
-
+    Template saved =
+        auditTemplate.execute(
+            template,
+            null,
+            DomainEvents.Templates.ACTIVATED,
+            () -> {
+              Template result = repository.save(template);
+              log.info("Template activated - id={} name={}", id, template.getName());
+              return result;
+            });
     return mapper.toResponse(saved);
   }
 
@@ -72,29 +65,30 @@ public class TemplateService {
         Template.builder()
             .bodyTemplate(request.bodyTemplate())
             .channel(request.channel())
-            .contentType(request.contentType())
+            .templateContentType(request.templateContentType())
+            .isActive(true)
             .name(request.name())
             .subject(request.subject())
-            .variableDefinitions(request.variableDefinitions())
+            .variableDefinitions(
+                request.variableDefinitions() != null
+                    ? List.copyOf(request.variableDefinitions())
+                    : List.of())
             .build();
 
-    Template saved = repository.save(template);
-
-    log.info(
-        "Template created - id={} name={} channel={}",
-        saved.getId(),
-        saved.getName(),
-        saved.getChannel());
-
-    auditEventPublisher.publishSuccess(
-        template.getId(),
-        TEMPLATE,
-        EventTypes.Templates.CREATED,
-        AuditMetadataBuilder.forTemplate(saved),
-        SYSTEM_ID,
-        RoutingKeys.NOTIFICATIONS_TEMPLATE_AUDIT,
-        ExecutionContext.getUserId());
-
+    Template saved =
+        auditTemplate.execute(
+            template,
+            null,
+            DomainEvents.Templates.CREATED,
+            () -> {
+              Template result = repository.save(template);
+              log.info(
+                  "Template created - id={} name={} channel={}",
+                  result.getId(),
+                  result.getName(),
+                  result.getChannel());
+              return result;
+            });
     return mapper.toResponse(saved);
   }
 
@@ -102,23 +96,22 @@ public class TemplateService {
   public TemplateResponse deactivate(UUID id) {
     Template template = findTemplateById(id);
     template.deactivate();
-    Template saved = repository.save(template);
 
-    log.info("Template deactivated - id={} name={}", id, template.getName());
-
-    auditEventPublisher.publishSuccess(
-        template.getId(),
-        TEMPLATE,
-        EventTypes.Templates.DEACTIVATED,
-        AuditMetadataBuilder.forTemplate(saved),
-        SYSTEM_ID,
-        RoutingKeys.NOTIFICATIONS_TEMPLATE_AUDIT,
-        ExecutionContext.getUserId());
-
+    Template saved =
+        auditTemplate.execute(
+            template,
+            null,
+            DomainEvents.Templates.DEACTIVATED,
+            () -> {
+              Template result = repository.save(template);
+              log.info("Template deactivated - id={} name={}", id, template.getName());
+              return result;
+            });
     return mapper.toResponse(saved);
   }
 
   public Page<TemplateSummaryResponse> findAll(TemplateFilter filter) {
+    log.info("Searching for templates with filter: {}", filter);
     Specification<Template> specification = TemplateSpecifications.buildSpecification(filter);
     Pageable pageable =
         FilterUtilities.buildPageable(filter, TemplateSpecifications.ALLOWED_SORT_FIELDS);
@@ -145,20 +138,21 @@ public class TemplateService {
     Template template = findTemplateById(id);
     template.updateContent(
         request.bodyTemplate(), request.subject(), request.variableDefinitions());
-    Template saved = repository.save(template);
 
-    log.info(
-        "Template updated - id={} name={} version={}", id, template.getName(), saved.getVersion());
-
-    auditEventPublisher.publishSuccess(
-        template.getId(),
-        TEMPLATE,
-        EventTypes.Templates.UPDATED,
-        AuditMetadataBuilder.forTemplate(saved),
-        SYSTEM_ID,
-        RoutingKeys.NOTIFICATIONS_TEMPLATE_AUDIT,
-        ExecutionContext.getUserId());
-
+    Template saved =
+        auditTemplate.execute(
+            template,
+            null,
+            DomainEvents.Templates.UPDATED,
+            () -> {
+              Template result = repository.save(template);
+              log.info(
+                  "Template updated - id={} name={} version={}",
+                  id,
+                  template.getName(),
+                  result.getVersion());
+              return result;
+            });
     return mapper.toResponse(saved);
   }
 

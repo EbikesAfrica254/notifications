@@ -2,8 +2,8 @@ package com.ebikes.notifications.listeners;
 
 import org.springframework.stereotype.Component;
 
-import com.ebikes.notifications.constants.EventConstants.RoutingKeys;
-import com.ebikes.notifications.dtos.events.incoming.UserProvisionedEvent;
+import com.ebikes.notifications.constants.EventConstants.ExternalContracts;
+import com.ebikes.notifications.dtos.events.incoming.UserConfigurationRequest;
 import com.ebikes.notifications.services.events.InboxService;
 import com.ebikes.notifications.services.preferences.UserPreferenceService;
 import com.ebikes.notifications.support.context.EventContext;
@@ -15,7 +15,7 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class UserProvisionedEventListener implements IncomingEventHandler {
+public class UserConfigurationRequestListener implements IncomingEventHandler {
 
   private final InboxService inboxService;
   private final ObjectMapper objectMapper;
@@ -23,9 +23,10 @@ public class UserProvisionedEventListener implements IncomingEventHandler {
 
   @Override
   public void handle(byte[] payload) {
-    UserProvisionedEvent event = objectMapper.readValue(payload, UserProvisionedEvent.class);
+    UserConfigurationRequest event =
+        objectMapper.readValue(payload, UserConfigurationRequest.class);
     log.info(
-        "Received UserProvisionedEvent - keycloakUserId={} organizationId={}",
+        "Received UserConfigurationRequest - keycloakUserId={} organizationId={}",
         event.keycloakUserId(),
         event.organizationId());
 
@@ -44,7 +45,7 @@ public class UserProvisionedEventListener implements IncomingEventHandler {
       inboxService.markProcessed(event.serviceReference());
     } catch (Exception e) {
       log.error(
-          "Failed to process UserProvisionedEvent: serviceReference={}",
+          "Failed to process UserConfigurationRequest: serviceReference={}",
           event.serviceReference(),
           e);
     }
@@ -52,6 +53,6 @@ public class UserProvisionedEventListener implements IncomingEventHandler {
 
   @Override
   public boolean matches(String routingKey) {
-    return routingKey.equals(RoutingKeys.USER_CONFIGURATION);
+    return routingKey.equals(ExternalContracts.USER_CONFIGURATION);
   }
 }
