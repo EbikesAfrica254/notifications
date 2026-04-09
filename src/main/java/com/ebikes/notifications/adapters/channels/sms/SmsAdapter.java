@@ -1,6 +1,6 @@
-package com.ebikes.notifications.adapters.sms;
+package com.ebikes.notifications.adapters.channels.sms;
 
-import com.ebikes.notifications.adapters.ChannelAdapter;
+import com.ebikes.notifications.adapters.channels.ChannelAdapter;
 import com.ebikes.notifications.dtos.requests.channels.sms.SmsRequest;
 import com.ebikes.notifications.dtos.responses.channels.ChannelResponse;
 

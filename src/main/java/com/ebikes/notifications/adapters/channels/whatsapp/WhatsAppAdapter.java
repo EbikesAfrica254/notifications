@@ -1,6 +1,6 @@
-package com.ebikes.notifications.adapters.whatsapp;
+package com.ebikes.notifications.adapters.channels.whatsapp;
 
-import com.ebikes.notifications.adapters.ChannelAdapter;
+import com.ebikes.notifications.adapters.channels.ChannelAdapter;
 import com.ebikes.notifications.dtos.requests.channels.whatsapp.WhatsAppRequest;
 import com.ebikes.notifications.dtos.responses.channels.ChannelResponse;
 

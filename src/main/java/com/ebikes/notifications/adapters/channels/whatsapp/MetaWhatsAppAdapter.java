@@ -1,4 +1,4 @@
-package com.ebikes.notifications.adapters.whatsapp;
+package com.ebikes.notifications.adapters.channels.whatsapp;
 
 import java.math.BigDecimal;
 import java.net.http.HttpClient;
@@ -178,9 +178,9 @@ public class MetaWhatsAppAdapter implements WhatsAppAdapter {
         || ApplicationConstants.WhatsApp.AUTH_EXCEPTION_TYPE.equals(type);
   }
 
-  private record MetaError(int code, String message, String type) {}
+  record MetaError(int code, String message, String type) {}
 
-  private record MetaApiResponse(List<Message> messages) {
-    private record Message(String id) {}
+  record MetaApiResponse(List<Message> messages) {
+    record Message(String id) {}
   }
 }

@@ -1,4 +1,4 @@
-package com.ebikes.notifications.adapters.email;
+package com.ebikes.notifications.adapters.channels.email;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

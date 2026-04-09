@@ -1,4 +1,4 @@
-package com.ebikes.notifications.adapters.sms;
+package com.ebikes.notifications.adapters.channels.sms;
 
 import java.math.BigDecimal;
 import java.net.http.HttpClient;
