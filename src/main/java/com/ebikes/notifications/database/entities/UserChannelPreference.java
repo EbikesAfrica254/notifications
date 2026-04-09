@@ -2,6 +2,7 @@ package com.ebikes.notifications.database.entities;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Map;
 import java.util.Objects;
 
 import jakarta.persistence.Column;
@@ -19,16 +20,18 @@ import com.ebikes.notifications.enums.ChannelType;
 import com.ebikes.notifications.enums.NotificationCategory;
 import com.ebikes.notifications.enums.ResponseCode;
 import com.ebikes.notifications.exceptions.InvalidStateException;
+import com.ebikes.notifications.support.audit.Auditable;
 
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SuperBuilder
 @Table(
     name = "user_channel_preferences",
     schema = "notifications",
@@ -43,7 +46,7 @@ import lombok.ToString;
           columnNames = {"user_id", "organization_id", "channel", "category"})
     })
 @ToString
-public class UserChannelPreference extends BaseEntity {
+public class UserChannelPreference extends BaseEntity implements Auditable {
 
   @Column(name = "category", nullable = false, updatable = false, length = 50)
   @Enumerated(EnumType.STRING)
@@ -69,34 +72,6 @@ public class UserChannelPreference extends BaseEntity {
   @Version
   private Integer version;
 
-  @Builder
-  public UserChannelPreference(
-      NotificationCategory category,
-      ChannelType channel,
-      Boolean enabled,
-      String organizationId,
-      String userId) {
-
-    if (category == null) {
-      throw new IllegalArgumentException("Category is required");
-    }
-    if (channel == null) {
-      throw new IllegalArgumentException("Channel is required");
-    }
-    if (organizationId == null || organizationId.isBlank()) {
-      throw new IllegalArgumentException("Organization ID is required");
-    }
-    if (userId == null || userId.isBlank()) {
-      throw new IllegalArgumentException("User ID is required");
-    }
-
-    this.category = category;
-    this.channel = channel;
-    this.enabled = enabled != null ? enabled : Boolean.TRUE;
-    this.organizationId = organizationId;
-    this.userId = userId;
-  }
-
   public void disable() {
     if (Boolean.FALSE.equals(this.enabled)) {
       throw new InvalidStateException(
@@ -118,6 +93,19 @@ public class UserChannelPreference extends BaseEntity {
   @PreUpdate
   protected void onUpdate() {
     this.updatedAt = OffsetDateTime.now(ZoneOffset.UTC);
+  }
+
+  @Override
+  public Map<String, String> toAuditMetadata() {
+    return Map.of(
+        "category",
+        category.name(),
+        "channel",
+        channel.name(),
+        "organizationId",
+        organizationId,
+        "userId",
+        userId);
   }
 
   @Override

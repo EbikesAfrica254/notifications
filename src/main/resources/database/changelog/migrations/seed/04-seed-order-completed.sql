@@ -1,0 +1,33 @@
+-- ORDER_COMPLETED: EMAIL summary sent when an order is fully closed
+INSERT INTO notifications.templates (
+    name,
+    channel,
+    content_type,
+    subject,
+    body_template,
+    is_active,
+    created_at,
+    created_by,
+    variable_definitions
+) VALUES (
+             'ORDER_COMPLETED',
+             'EMAIL',
+             'HTML',
+             '[(${organizationName})]: Your order [(${orderReference})] is complete',
+             '<!DOCTYPE html><html lang="en" xmlns="http://www.w3.org/1999/xhtml"><head><meta content="text/html; charset=UTF-8" http-equiv="Content-Type"><meta content="width=device-width,initial-scale=1" name="viewport"><meta content="" name="x-apple-disable-message-reformatting"><title>Order Complete</title><style>@media only screen and (max-width:600px){.container{width:100%!important}.mobile-padding{padding-left:20px!important;padding-right:20px!important}}body{margin:0;padding:0;background-color:#f5f5f5}table{border-collapse:collapse}img{border:0;display:block}a{color:#2d7a3e}</style></head><body style="margin:0;padding:0;background-color:#f5f5f5;font-family:Poppins,Arial,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%"><div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden">Your order [[${orderReference}]] has been completed. Thank you for choosing [[${organizationName}]].</div><table border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;margin:0;padding:0;background-color:#f5f5f5;border-collapse:collapse" width="100%"><tr><td align="center" style="padding:40px 0"><table border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#fff;width:100%;max-width:600px;margin:0 auto;border-collapse:collapse" width="600" class="container"><tr><td align="center" style="padding:40px 30px;background-color:#2d7a3e"><img th:alt="${organizationName}" alt="" height="40" th:src="${logoUrl}" src="" style="display:block;border:0;height:40px;width:40px;margin:0 auto" width="40"></td></tr><tr><td style="padding:48px 60px;font-family:Poppins,Arial,sans-serif;font-size:16px;line-height:24px;color:#4a4a4a" class="mobile-padding"><h1 style="margin:0 0 24px 0;font-family:Poppins,Arial,sans-serif;font-size:28px;line-height:36px;color:#1a1a1a;font-weight:600">Order Complete</h1><p style="margin:0 0 24px 0;font-family:Poppins,Arial,sans-serif;font-size:16px;line-height:24px;color:#4a4a4a">Your order has been successfully completed. Here is a summary for your records.</p><table border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;background-color:#f9f9f9;border-left:4px solid #2d7a3e;margin:0 0 24px 0;border-collapse:collapse" width="100%"><tr><td style="padding:20px 24px;font-family:Poppins,Arial,sans-serif;font-size:14px;line-height:24px;color:#4a4a4a"><p style="margin:0 0 8px 0"><span style="color:#6b6b6b">Order Reference</span><br><strong style="font-size:16px;color:#1a1a1a;font-weight:600">[[${orderReference}]]</strong></p><p style="margin:8px 0 8px 0;border-top:1px solid #e5e5e5;padding-top:8px"><span style="color:#6b6b6b">Delivered To</span><br><strong style="color:#1a1a1a;font-weight:600">[[${deliveryAddress}]]</strong></p><p style="margin:8px 0 0 0;border-top:1px solid #e5e5e5;padding-top:8px"><span style="color:#6b6b6b">Completed</span><br><strong style="color:#1a1a1a;font-weight:600">[[${completedAt}]]</strong></p></td></tr></table><p style="margin:0 0 24px 0;font-family:Poppins,Arial,sans-serif;font-size:16px;line-height:24px;color:#4a4a4a">Thank you for choosing <strong style="font-weight:600">[[${organizationName}]]</strong>. We hope to serve you again soon.</p><p style="margin:0;font-family:Poppins,Arial,sans-serif;font-size:14px;line-height:20px;color:#6b6b6b">If you have any questions about this order, please do not hesitate to reach out to our support team.</p></td></tr><tr><td style="padding:32px 60px;background-color:#f9f9f9;border-top:1px solid #e5e5e5;font-family:Poppins,Arial,sans-serif;text-align:center" class="mobile-padding"><p style="margin:0 0 16px 0;font-family:Poppins,Arial,sans-serif;font-size:14px;line-height:20px;color:#6b6b6b;text-align:center"><strong style="color:#4a4a4a;font-weight:600">[[${organizationName}]]</strong><br><span style="color:#6b6b6b">[[${organizationAddress}]]</span></p><p style="margin:0 0 16px 0;font-family:Poppins,Arial,sans-serif;font-size:14px;line-height:20px;color:#6b6b6b;text-align:center">Need help? <a th:href="${supportUrl}" href="#" style="color:#2d7a3e;text-decoration:underline" target="_blank">Contact Support</a></p><p style="margin:0;font-family:Poppins,Arial,sans-serif;font-size:12px;line-height:18px;color:#999;text-align:center">This is an automated message, please do not reply to this email.<br>© [[${currentYear}]] [[${organizationName}]]. All rights reserved.</p></td></tr></table></td></tr></table></body></html>',
+             true,
+             NOW(),
+             'system:liquibase-seed',
+             '[
+               {"name":"orderReference","type":"STRING","description":"Human-readable order reference number","required":true,"sensitive":false},
+               {"name":"deliveryAddress","type":"STRING","description":"Address the order was delivered to","required":true,"sensitive":false},
+               {"name":"completedAt","type":"STRING","description":"Human-readable timestamp when the order was completed, e.g. 6 Apr 2026, 14:35 EAT","required":true,"sensitive":false},
+               {"name":"logoUrl","type":"STRING","description":"Publicly accessible URL for the organisation logo image","required":false,"sensitive":false},
+               {"name":"organizationName","type":"STRING","description":"Display name of the organisation sending the notification","required":false,"sensitive":false},
+               {"name":"organizationAddress","type":"STRING","description":"Physical or postal address of the organisation","required":false,"sensitive":false},
+               {"name":"supportUrl","type":"STRING","description":"Publicly accessible URL to the organisation support page","required":false,"sensitive":false},
+               {"name":"currentYear","type":"STRING","description":"Current calendar year used in the copyright notice","required":false,"sensitive":false}
+             ]'
+         );
+
+--rollback DELETE FROM notifications.templates WHERE name = 'ORDER_COMPLETED';

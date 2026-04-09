@@ -6,10 +6,11 @@ import java.util.stream.Collectors;
 
 import com.ebikes.notifications.enums.UserRole;
 
-import lombok.experimental.UtilityClass;
+public final class RBACUtilities {
 
-@UtilityClass
-public class RBACUtilities {
+  private RBACUtilities() {
+    // prevent instantiation
+  }
 
   public static boolean hasSystemAdminRole(Set<UserRole> roles) {
     return roles.contains(UserRole.SYSTEM_ADMIN);
@@ -20,7 +21,7 @@ public class RBACUtilities {
   }
 
   public static boolean isOrganizationRole(UserRole role) {
-    return role.name().startsWith("ORGANIZATION_") || role == UserRole.SYSTEM_ADMIN;
+    return role.name().startsWith("ORGANIZATION_");
   }
 
   public static Set<UserRole> parseRoles(Set<String> roleNames) {

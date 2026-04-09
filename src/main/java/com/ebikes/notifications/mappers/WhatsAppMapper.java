@@ -17,6 +17,7 @@ import com.ebikes.notifications.dtos.requests.channels.whatsapp.components.Whats
 import com.ebikes.notifications.dtos.requests.channels.whatsapp.components.WhatsAppRow;
 import com.ebikes.notifications.dtos.requests.channels.whatsapp.components.WhatsAppSection;
 import com.ebikes.notifications.dtos.requests.channels.whatsapp.components.WhatsAppText;
+import com.ebikes.notifications.dtos.requests.channels.whatsapp.components.WhatsAppUrlButton;
 
 @Mapper(
     componentModel = "spring",
@@ -37,7 +38,7 @@ public interface WhatsAppMapper {
 
   default WhatsAppInteractive toButtonsInteractive(WhatsAppRequest request) {
     List<WhatsAppAction.Button> buttons = request.buttons().stream().map(this::toButton).toList();
-    WhatsAppAction action = new WhatsAppAction(buttons, null, null);
+    WhatsAppAction action = new WhatsAppAction(buttons, null, null, null);
     return new WhatsAppInteractive(
         ApplicationConstants.WhatsApp.INTERACTIVE_TYPE_BUTTON,
         null,
@@ -68,10 +69,29 @@ public interface WhatsAppMapper {
     return text != null ? new WhatsAppInteractive.Footer(text) : null;
   }
 
+  default WhatsAppInteractive toCtaUrlInteractive(WhatsAppRequest request) {
+    List<WhatsAppAction.UrlButton> urlButtons =
+        request.urlButtons().stream().map(this::toUrlButton).toList();
+    WhatsAppAction action = new WhatsAppAction(null, null, null, urlButtons);
+    return new WhatsAppInteractive(
+        ApplicationConstants.WhatsApp.INTERACTIVE_TYPE_CTA_URL,
+        null,
+        toBody(request.body()),
+        toFooter(request.footer()),
+        action);
+  }
+
+  @Mapping(target = "messagingProduct", constant = ApplicationConstants.WhatsApp.MESSAGING_PRODUCT)
+  @Mapping(target = "type", constant = ApplicationConstants.WhatsApp.MESSAGE_TYPE_INTERACTIVE)
+  @Mapping(target = "interactive", expression = "java(toCtaUrlInteractive(request))")
+  @Mapping(target = "text", ignore = true)
+  @Mapping(target = "document", ignore = true)
+  WhatsAppOutboundRequest toCtaUrlRequest(WhatsAppRequest request);
+
   default WhatsAppInteractive toListInteractive(WhatsAppRequest request) {
     List<WhatsAppAction.Section> sections =
         request.sections().stream().map(this::toSection).toList();
-    WhatsAppAction action = new WhatsAppAction(null, request.buttonText(), sections);
+    WhatsAppAction action = new WhatsAppAction(null, request.buttonText(), sections, null);
     return new WhatsAppInteractive(
         ApplicationConstants.WhatsApp.INTERACTIVE_TYPE_LIST,
         null,
@@ -91,6 +111,7 @@ public interface WhatsAppMapper {
     return switch (request.messageType()) {
       case TEXT -> toTextRequest(request);
       case BUTTONS -> toButtonsRequest(request);
+      case CTA_URL -> toCtaUrlRequest(request);
       case LIST -> toListRequest(request);
       case DOCUMENT -> toDocumentRequest(request);
     };
@@ -109,7 +130,15 @@ public interface WhatsAppMapper {
   @Mapping(target = "footer", source = "context.footer")
   @Mapping(target = "previewUrl", source = "context.previewUrl")
   @Mapping(target = "sections", source = "context.sections")
+  @Mapping(target = "urlButtons", source = "context.urlButtons")
   WhatsAppRequest toRequest(WhatsAppNotificationContext context, String recipient);
+
+  WhatsAppUrlButton toUrlButton(WhatsAppNotificationContext.UrlButtonContext context);
+
+  default WhatsAppAction.UrlButton toUrlButton(WhatsAppUrlButton dto) {
+    return new WhatsAppAction.UrlButton(
+        ApplicationConstants.WhatsApp.BUTTON_CTA_URL_TYPE, dto.url(), dto.displayText());
+  }
 
   WhatsAppRow toRow(WhatsAppNotificationContext.RowContext context);
 

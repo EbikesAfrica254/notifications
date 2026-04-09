@@ -24,16 +24,18 @@ import com.ebikes.notifications.enums.ChannelType;
 import com.ebikes.notifications.enums.NotificationStatus;
 import com.ebikes.notifications.enums.ResponseCode;
 import com.ebikes.notifications.exceptions.InvalidStateException;
+import com.ebikes.notifications.support.audit.Auditable;
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SuperBuilder
 @Table(
     name = "notifications",
     schema = "notifications",
@@ -44,7 +46,7 @@ import lombok.NoArgsConstructor;
       @Index(name = "idx_notifications_service_reference", columnList = "service_reference"),
       @Index(name = "idx_notifications_status", columnList = "status")
     })
-public class Notification extends AuditableEntity {
+public class Notification extends AuditableEntity implements Auditable {
 
   @Column(name = "branch_id", updatable = false)
   private String branchId;
@@ -88,32 +90,6 @@ public class Notification extends AuditableEntity {
   @Type(JsonBinaryType.class)
   private Map<String, Serializable> variables;
 
-  @Builder
-  public Notification(
-      String branchId,
-      @NotNull ChannelType channel,
-      @NotBlank String messageBody,
-      String messageSubject,
-      @NotNull String organizationId,
-      @NotBlank String recipient,
-      @NotBlank String serviceReference,
-      Template template,
-      Integer templateVersion,
-      Map<String, Serializable> variables) {
-
-    this.branchId = branchId;
-    this.channel = channel;
-    this.messageBody = messageBody;
-    this.messageSubject = messageSubject;
-    this.organizationId = organizationId;
-    this.recipient = recipient;
-    this.serviceReference = serviceReference;
-    this.status = NotificationStatus.PENDING;
-    this.template = template;
-    this.templateVersion = templateVersion;
-    this.variables = variables;
-  }
-
   public void cancel() {
     if (this.status != NotificationStatus.PENDING && this.status != NotificationStatus.PROCESSING) {
       throw new InvalidStateException(
@@ -123,7 +99,7 @@ public class Notification extends AuditableEntity {
   }
 
   public void markDelivered() {
-    if (this.status != NotificationStatus.PROCESSING) {
+    if (this.status != NotificationStatus.PROCESSING && this.status != NotificationStatus.PENDING) {
       throw new InvalidStateException(
           ResponseCode.INVALID_STATE,
           "Cannot mark notification as DELIVERED from status=" + this.status);
@@ -132,7 +108,7 @@ public class Notification extends AuditableEntity {
   }
 
   public void markFailed() {
-    if (this.status != NotificationStatus.PROCESSING) {
+    if (this.status != NotificationStatus.PROCESSING && this.status != NotificationStatus.PENDING) {
       throw new InvalidStateException(
           ResponseCode.INVALID_STATE,
           "Cannot mark notification as FAILED from status=" + this.status);
@@ -168,5 +144,13 @@ public class Notification extends AuditableEntity {
       return messageSubject != null && !messageSubject.isBlank();
     }
     return messageSubject == null;
+  }
+
+  @Override
+  public Map<String, String> toAuditMetadata() {
+    return Map.of(
+        "channel", channel.name(),
+        "organizationId", organizationId,
+        "serviceReference", serviceReference);
   }
 }

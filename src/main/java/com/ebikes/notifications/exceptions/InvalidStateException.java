@@ -11,4 +11,9 @@ public class InvalidStateException extends BaseException {
   public InvalidStateException(ResponseCode responseCode, String developerMessage) {
     super(responseCode, developerMessage);
   }
+
+  public InvalidStateException(
+      ResponseCode responseCode, String developerMessage, Throwable cause) {
+    super(responseCode, developerMessage, cause);
+  }
 }

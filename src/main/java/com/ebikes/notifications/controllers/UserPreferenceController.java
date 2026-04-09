@@ -26,7 +26,6 @@ import com.ebikes.notifications.dtos.responses.preferences.user.UserPreferenceRe
 import com.ebikes.notifications.enums.ChannelType;
 import com.ebikes.notifications.enums.NotificationCategory;
 import com.ebikes.notifications.services.preferences.UserPreferenceService;
-import com.ebikes.notifications.support.context.ExecutionContext;
 
 import lombok.RequiredArgsConstructor;
 
@@ -51,8 +50,7 @@ public class UserPreferenceController {
       @PathVariable String userId,
       @RequestParam ChannelType channel,
       @RequestParam NotificationCategory category) {
-    String organizationId = ExecutionContext.getActiveOrganization();
-    userPreferenceService.delete(userId, organizationId, channel, category);
+    userPreferenceService.delete(userId, channel, category);
     return ResponseEntity.noContent().build();
   }
 
@@ -61,9 +59,8 @@ public class UserPreferenceController {
       @PathVariable String userId,
       @RequestParam ChannelType channel,
       @RequestParam NotificationCategory category) {
-    String organizationId = ExecutionContext.getActiveOrganization();
     UserPreferenceResponse preference =
-        userPreferenceService.findByCompositeKeyResponse(userId, organizationId, channel, category);
+        userPreferenceService.findByCompositeKeyResponse(userId, channel, category);
     return ResponseEntity.ok(SuccessResponse.of(preference));
   }
 
@@ -82,9 +79,8 @@ public class UserPreferenceController {
       @RequestParam ChannelType channel,
       @RequestParam NotificationCategory category,
       @Valid @RequestBody UpdateUserPreferenceRequest request) {
-    String organizationId = ExecutionContext.getActiveOrganization();
     UserPreferenceResponse preference =
-        userPreferenceService.update(userId, organizationId, channel, category, request);
+        userPreferenceService.update(userId, channel, category, request);
     return ResponseEntity.ok(
         SuccessResponse.of(preference, "User preference updated successfully"));
   }

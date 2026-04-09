@@ -1,8 +1,9 @@
 package com.ebikes.notifications.services.notifications;
 
-import static com.ebikes.notifications.constants.EventConstants.EventTypes;
-import static com.ebikes.notifications.constants.EventConstants.RoutingKeys;
+import static com.ebikes.notifications.constants.EventConstants.DomainEvents;
 
+import java.io.Serializable;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -16,81 +17,91 @@ import com.ebikes.notifications.database.entities.Template;
 import com.ebikes.notifications.database.repositories.NotificationRepository;
 import com.ebikes.notifications.database.specifications.NotificationSpecifications;
 import com.ebikes.notifications.dtos.events.incoming.NotificationRequest;
+import com.ebikes.notifications.dtos.requests.channels.sse.SseRequest;
 import com.ebikes.notifications.dtos.requests.filters.NotificationFilter;
 import com.ebikes.notifications.dtos.responses.notifications.NotificationResponse;
 import com.ebikes.notifications.dtos.responses.notifications.NotificationSummaryResponse;
-import com.ebikes.notifications.enums.ContentType;
+import com.ebikes.notifications.enums.ChannelType;
+import com.ebikes.notifications.enums.NotificationStatus;
 import com.ebikes.notifications.enums.ResponseCode;
+import com.ebikes.notifications.enums.TemplateContentType;
 import com.ebikes.notifications.exceptions.DuplicateResourceException;
+import com.ebikes.notifications.exceptions.InvalidStateException;
 import com.ebikes.notifications.exceptions.ResourceNotFoundException;
+import com.ebikes.notifications.exceptions.ValidationException;
 import com.ebikes.notifications.mappers.NotificationMapper;
-import com.ebikes.notifications.publishers.AuditEventPublisher;
 import com.ebikes.notifications.services.templates.TemplateProcessor;
 import com.ebikes.notifications.services.templates.TemplateService;
-import com.ebikes.notifications.support.audit.AuditMetadataBuilder;
-import com.ebikes.notifications.support.context.ExecutionContext;
+import com.ebikes.notifications.services.templates.TemplateVariableEnricher;
+import com.ebikes.notifications.support.audit.AuditTemplate;
 import com.ebikes.notifications.support.database.FilterUtilities;
 import com.ebikes.notifications.support.security.RecipientMaskingUtility;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
 
 @RequiredArgsConstructor
 @Service
 @Slf4j
 public class NotificationService {
 
-  private static final String ROUTING_KEY = RoutingKeys.audit("notifications");
+  private static final String VARIABLE_ENTITY_ID = "entityId";
+  private static final String VARIABLE_REFERENCE = "reference";
 
-  private final AuditEventPublisher auditEventPublisher;
+  private final AuditTemplate auditTemplate;
   private final NotificationMapper mapper;
+  private final ObjectMapper objectMapper;
   private final NotificationRepository repository;
   private final TemplateProcessor templateProcessor;
   private final TemplateService templateService;
+  private final TemplateVariableEnricher templateVariableEnricher;
 
   @Transactional
   public void cancel(UUID id) {
     Notification notification = findNotificationById(id);
     notification.cancel();
-    repository.save(notification);
 
-    log.info(
-        "Notification cancelled - id={} serviceReference={}",
-        id,
-        notification.getServiceReference());
-
-    auditEventPublisher.publishSuccess(
-        notification.getId(),
-        EventTypes.Notifications.CANCELLED,
-        "NOTIFICATION",
-        AuditMetadataBuilder.forNotification(notification),
+    auditTemplate.execute(
+        notification,
         notification.getOrganizationId(),
-        ROUTING_KEY,
-        ExecutionContext.getUserId());
+        DomainEvents.Notifications.CANCELLED,
+        () -> {
+          repository.save(notification);
+          log.info(
+              "Notification cancelled - id={} serviceReference={}",
+              id,
+              notification.getServiceReference());
+        });
   }
 
   @Transactional
   public Notification create(NotificationRequest request) {
     deduplicate(request.serviceReference());
 
-    Template template =
-        templateService.findByChannelAndName(request.channel(), request.templateName());
+    Notification notification =
+        request.channel() == ChannelType.SSE
+            ? buildFromVariables(request)
+            : buildFromTemplate(request);
 
-    Notification notification = build(request, template);
-    Notification saved = repository.save(notification);
-
-    log.info(
-        "Notification created - id={} serviceReference={} organizationId={} branchId={}"
-            + " channel={} templateName={} templateVersion={}",
-        saved.getId(),
-        saved.getServiceReference(),
-        saved.getOrganizationId(),
-        saved.getBranchId(),
-        saved.getChannel(),
-        template.getName(),
-        saved.getTemplateVersion());
-
-    return saved;
+    return auditTemplate.execute(
+        notification,
+        notification.getOrganizationId(),
+        DomainEvents.Notifications.CREATED,
+        () -> {
+          Notification saved = repository.save(notification);
+          log.info(
+              "Notification created - id={} serviceReference={} organizationId={} branchId={}"
+                  + " channel={} templateName={} templateVersion={}",
+              saved.getId(),
+              saved.getServiceReference(),
+              saved.getOrganizationId(),
+              saved.getBranchId(),
+              saved.getChannel(),
+              request.templateName(),
+              saved.getTemplateVersion());
+          return saved;
+        });
   }
 
   @Transactional(readOnly = true)
@@ -124,24 +135,36 @@ public class NotificationService {
   public void markDelivered(UUID id) {
     Notification notification = findNotificationById(id);
     notification.markDelivered();
-    repository.save(notification);
 
-    log.info(
-        "Notification marked DELIVERED - id={} serviceReference={}",
-        id,
-        notification.getServiceReference());
+    auditTemplate.execute(
+        notification,
+        notification.getOrganizationId(),
+        DomainEvents.Notifications.DELIVERED,
+        () -> {
+          repository.save(notification);
+          log.info(
+              "Notification marked DELIVERED - id={} serviceReference={}",
+              id,
+              notification.getServiceReference());
+        });
   }
 
   @Transactional
   public void markFailed(UUID id) {
     Notification notification = findNotificationById(id);
     notification.markFailed();
-    repository.save(notification);
 
-    log.info(
-        "Notification marked FAILED - id={} serviceReference={}",
-        id,
-        notification.getServiceReference());
+    auditTemplate.execute(
+        notification,
+        notification.getOrganizationId(),
+        DomainEvents.Notifications.FAILED,
+        () -> {
+          repository.save(notification);
+          log.info(
+              "Notification marked FAILED - id={} serviceReference={}",
+              id,
+              notification.getServiceReference());
+        });
   }
 
   @Transactional
@@ -156,34 +179,77 @@ public class NotificationService {
         notification.getServiceReference());
   }
 
-  private Notification build(NotificationRequest request, Template template) {
+  private Notification buildFromTemplate(NotificationRequest request) {
+    Template template =
+        templateService.findByChannelAndName(request.channel(), request.templateName());
+
+    Map<String, Serializable> variables =
+        templateVariableEnricher.enrich(request.organizationId(), request.variables());
+
     String messageBody =
         templateProcessor.render(
-            template.getContentType(),
+            template.getTemplateContentType(),
             template.getBodyTemplate(),
             template.getVariableDefinitions(),
-            request.variables());
+            variables);
 
     String messageSubject =
         template.getSubject() == null
             ? null
             : templateProcessor.render(
-                ContentType.PLAIN_TEXT,
+                TemplateContentType.PLAIN_TEXT,
                 template.getSubject(),
                 template.getVariableDefinitions(),
-                request.variables());
+                variables);
 
-    return new Notification(
-        request.branchId(),
-        request.channel(),
-        messageBody,
-        messageSubject,
-        request.organizationId(),
-        RecipientMaskingUtility.mask(request.recipient()),
-        request.serviceReference(),
-        template,
-        template.getVersion(),
-        templateProcessor.redactVariables(request.variables(), template.getVariableDefinitions()));
+    return Notification.builder()
+        .branchId(request.branchId())
+        .channel(request.channel())
+        .messageBody(messageBody)
+        .messageSubject(messageSubject)
+        .organizationId(request.organizationId())
+        .recipient(RecipientMaskingUtility.mask(request.recipient()))
+        .serviceReference(request.serviceReference())
+        .status(NotificationStatus.PENDING)
+        .template(template)
+        .templateVersion(template.getVersion())
+        .variables(templateProcessor.redactVariables(variables, template.getVariableDefinitions()))
+        .build();
+  }
+
+  private Notification buildFromVariables(NotificationRequest request) {
+    SseRequest sseRequest;
+    try {
+      sseRequest = objectMapper.convertValue(request.variables(), SseRequest.class);
+    } catch (Exception e) {
+      throw new ValidationException(
+          ResponseCode.INVALID_ARGUMENTS,
+          "Invalid SSE payload for serviceReference=" + request.serviceReference(),
+          "variables",
+          null);
+    }
+
+    String messageBody;
+    try {
+      messageBody = objectMapper.writeValueAsString(sseRequest);
+    } catch (Exception e) {
+      throw new InvalidStateException(
+          ResponseCode.INVALID_STATE,
+          "Failed to serialize SSE payload for serviceReference=" + request.serviceReference(),
+          e);
+    }
+
+    return Notification.builder()
+        .branchId(request.branchId())
+        .channel(request.channel())
+        .messageBody(messageBody)
+        .messageSubject(null)
+        .organizationId(request.organizationId())
+        .recipient(RecipientMaskingUtility.mask(request.recipient()))
+        .serviceReference(request.serviceReference())
+        .status(NotificationStatus.PENDING)
+        .variables(request.variables())
+        .build();
   }
 
   private void deduplicate(String serviceReference) {

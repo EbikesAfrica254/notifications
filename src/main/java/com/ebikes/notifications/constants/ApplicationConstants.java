@@ -22,6 +22,16 @@ public final class ApplicationConstants {
     }
   }
 
+  public static final class MessageHeaders {
+    private MessageHeaders() {
+      // prevent instantiation
+    }
+
+    public static final String EVENT_TYPE = "eventType";
+    public static final String OUTBOX_ID = "outboxId";
+    public static final String ROUTING_KEY = "routingKey";
+  }
+
   public static final class Outbox {
     public static final String BINDING_NAME = "eventPublisher-out-0";
     public static final int MAX_RETRY_COUNT = 5;
@@ -47,10 +57,12 @@ public final class ApplicationConstants {
 
     // Interactive subtypes
     public static final String INTERACTIVE_TYPE_BUTTON = "button";
+    public static final String INTERACTIVE_TYPE_CTA_URL = "cta_url";
     public static final String INTERACTIVE_TYPE_LIST = "list";
 
     // Button reply type
     public static final String BUTTON_REPLY_TYPE = "reply";
+    public static final String BUTTON_CTA_URL_TYPE = "cta_url";
 
     // Messaging product
     public static final String MESSAGING_PRODUCT = "whatsapp";

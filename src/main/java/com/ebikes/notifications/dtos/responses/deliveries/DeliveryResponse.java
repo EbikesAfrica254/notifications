@@ -18,8 +18,6 @@ public record DeliveryResponse(
     String errorCode,
     String errorMessage,
     UUID id,
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
-        OffsetDateTime nextRetryAt,
     UUID notificationId,
     String providerMessageId,
     DeliveryStatus status) {}

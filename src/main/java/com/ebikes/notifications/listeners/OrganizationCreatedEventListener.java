@@ -2,7 +2,7 @@ package com.ebikes.notifications.listeners;
 
 import org.springframework.stereotype.Component;
 
-import com.ebikes.notifications.constants.EventConstants.RoutingKeys;
+import com.ebikes.notifications.constants.EventConstants.ExternalContracts;
 import com.ebikes.notifications.dtos.events.incoming.OrganizationCreatedEvent;
 import com.ebikes.notifications.services.events.InboxService;
 import com.ebikes.notifications.services.preferences.OrganizationPreferenceService;
@@ -50,6 +50,6 @@ public class OrganizationCreatedEventListener implements IncomingEventHandler {
 
   @Override
   public boolean matches(String routingKey) {
-    return routingKey.equals(RoutingKeys.ORGANIZATION_CONFIGURATION);
+    return routingKey.equals(ExternalContracts.ORGANIZATION_CONFIGURATION);
   }
 }

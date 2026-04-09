@@ -1,5 +1,7 @@
 package com.ebikes.notifications.support.security;
 
+import java.util.UUID;
+
 public class RecipientMaskingUtility {
 
   private static final int EMAIL_VISIBLE_PREFIX = 1;
@@ -14,7 +16,19 @@ public class RecipientMaskingUtility {
     if (recipient == null || recipient.isBlank()) {
       return recipient;
     }
+    if (isUuid(recipient)) {
+      return recipient;
+    }
     return recipient.contains("@") ? maskEmail(recipient) : maskPhone(recipient);
+  }
+
+  private static boolean isUuid(String value) {
+    try {
+      UUID.fromString(value);
+      return true;
+    } catch (IllegalArgumentException e) {
+      return false;
+    }
   }
 
   private static String maskEmail(String email) {

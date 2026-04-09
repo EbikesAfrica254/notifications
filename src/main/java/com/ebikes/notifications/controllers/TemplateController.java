@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import jakarta.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 public class TemplateController {
 
+  private static final Logger log = LoggerFactory.getLogger(TemplateController.class);
   private final TemplateService templateService;
 
   @PutMapping("/{id}/activate")
@@ -62,7 +65,8 @@ public class TemplateController {
 
   @GetMapping
   public ResponseEntity<PaginatedResponse<TemplateSummaryResponse>> search(
-      @ModelAttribute TemplateFilter filter) {
+      @Valid @ModelAttribute TemplateFilter filter) {
+    log.info("Searching templates with filter: {}", filter);
     Page<TemplateSummaryResponse> page = templateService.findAll(filter);
     return ResponseEntity.ok(PaginatedResponse.from("Templates retrieved successfully.", page));
   }

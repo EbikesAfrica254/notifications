@@ -26,7 +26,7 @@ public class EventContext {
 
   public static String getRoutingKey() {
     EventData data = context.get();
-    return data != null ? data.assignmentsKey() : null;
+    return data != null ? data.routingKey() : null;
   }
 
   public static String getSourceService() {
@@ -35,10 +35,10 @@ public class EventContext {
   }
 
   public static void set(
-      String correlationId, String eventType, String assignmentsKey, String sourceService) {
-    context.set(new EventData(correlationId, eventType, assignmentsKey, sourceService));
+      String correlationId, String eventType, String routingKey, String sourceService) {
+    context.set(new EventData(correlationId, eventType, routingKey, sourceService));
   }
 
   public record EventData(
-      String correlationId, String eventType, String assignmentsKey, String sourceService) {}
+      String correlationId, String eventType, String routingKey, String sourceService) {}
 }

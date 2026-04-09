@@ -24,13 +24,10 @@ public class OutboxPublisher {
   @Scheduled(fixedDelay = 10000)
   public void publishPendingEvents() {
     List<Outbox> pendingEvents = repository.findByStatusOrderByIdAsc(OutboxStatus.PENDING);
-
     if (pendingEvents.isEmpty()) {
       return;
     }
-
     log.debug("Processing {} pending outbox events", pendingEvents.size());
-
-    pendingEvents.forEach(eventProcessor::process);
+    pendingEvents.forEach(eventProcessor::processAsync);
   }
 }

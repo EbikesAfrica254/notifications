@@ -5,6 +5,7 @@ public enum DeliveryStatus {
   DELIVERED,
   FAILED,
   INVALID_RECIPIENT,
+  OFFLINE,
   PENDING,
   RATE_LIMITED,
   SUCCESS,

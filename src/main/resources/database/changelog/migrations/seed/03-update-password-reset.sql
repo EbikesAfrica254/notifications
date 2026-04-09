@@ -1,0 +1,15 @@
+-- update PASSWORD_RESET: system variables set to the required: false
+UPDATE notifications.templates
+SET variable_definitions = '[
+  {"name":"logoUrl","type":"STRING","description":"Publicly accessible URL for the organisation logo image","required":false,"sensitive":false},
+  {"name":"organizationName","type":"STRING","description":"Display name of the organisation sending the notification","required":false,"sensitive":false},
+  {"name":"organizationAddress","type":"STRING","description":"Physical or postal address of the organisation","required":false,"sensitive":false},
+  {"name":"supportUrl","type":"STRING","description":"Publicly accessible URL to the organisation support page","required":false,"sensitive":false},
+  {"name":"currentYear","type":"STRING","description":"Current calendar year used in the copyright notice","required":false,"sensitive":false},
+  {"name":"username","type":"STRING","description":"Display name of the recipient user","required":true,"sensitive":false},
+  {"name":"resetLink","type":"STRING","description":"System-generated password reset URL containing an embedded authentication token. Rendered unescaped — must only ever be populated from internal token generation, never from user input","required":true,"sensitive":true},
+  {"name":"expirationTime","type":"STRING","description":"Human-readable expiry duration for the reset link, e.g. 15 minutes","required":true,"sensitive":false}
+]'
+WHERE name = 'PASSWORD_RESET';
+
+--rollback UPDATE notifications.templates SET variable_definitions = '[{"name":"logoUrl","type":"STRING","description":"Publicly accessible URL for the organisation logo image","required":true,"sensitive":false},{"name":"organizationName","type":"STRING","description":"Display name of the organisation sending the notification","required":true,"sensitive":false},{"name":"organizationAddress","type":"STRING","description":"Physical or postal address of the organisation","required":true,"sensitive":false},{"name":"username","type":"STRING","description":"Display name of the recipient user","required":true,"sensitive":false},{"name":"resetLink","type":"STRING","description":"System-generated password reset URL containing an embedded authentication token. Rendered unescaped — must only ever be populated from internal token generation, never from user input","required":true,"sensitive":true},{"name":"expirationTime","type":"STRING","description":"Human-readable expiry duration for the reset link, e.g. 15 minutes","required":true,"sensitive":false},{"name":"supportUrl","type":"STRING","description":"Publicly accessible URL to the organisation support page","required":true,"sensitive":false},{"name":"currentYear","type":"STRING","description":"Current calendar year used in the copyright notice","required":true,"sensitive":false}]' WHERE name = 'PASSWORD_RESET';

@@ -2,8 +2,6 @@ package com.ebikes.notifications.services.deliveries;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -13,6 +11,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ebikes.notifications.constants.EventConstants.DomainEvents;
 import com.ebikes.notifications.database.entities.Delivery;
 import com.ebikes.notifications.database.entities.Notification;
 import com.ebikes.notifications.database.repositories.DeliveryRepository;
@@ -20,9 +19,11 @@ import com.ebikes.notifications.database.repositories.NotificationRepository;
 import com.ebikes.notifications.database.specifications.AuthorizationSpecifications;
 import com.ebikes.notifications.database.specifications.DeliverySpecifications;
 import com.ebikes.notifications.dtos.responses.deliveries.DeliveryResponse;
+import com.ebikes.notifications.enums.DeliveryStatus;
 import com.ebikes.notifications.enums.ResponseCode;
 import com.ebikes.notifications.exceptions.ResourceNotFoundException;
 import com.ebikes.notifications.mappers.DeliveryMapper;
+import com.ebikes.notifications.support.audit.AuditTemplate;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,9 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DeliveryService {
 
-  private static final int BASE_BACKOFF_SECONDS = 60;
-  private static final int MAX_BACKOFF_SECONDS = 3600;
-
+  private final AuditTemplate auditTemplate;
   private final DeliveryMapper deliveryMapper;
   private final DeliveryRepository deliveryRepository;
   private final NotificationRepository notificationRepository;
@@ -48,16 +47,30 @@ public class DeliveryService {
             .attemptNumber(attemptNumber)
             .notification(notification)
             .organizationId(notification.getOrganizationId())
+            .status(DeliveryStatus.PENDING)
             .build();
 
-    Delivery savedDelivery = deliveryRepository.save(delivery);
+    return auditTemplate.execute(
+        delivery,
+        notification.getOrganizationId(),
+        DomainEvents.Deliveries.ATTEMPTED,
+        () -> {
+          Delivery saved = deliveryRepository.save(delivery);
+          log.info(
+              "Delivery attempt created - notificationId={} attemptNumber={}",
+              notificationId,
+              attemptNumber);
+          return saved;
+        });
+  }
 
-    log.info(
-        "Delivery attempt created - notificationId={} attemptNumber={}",
-        notificationId,
-        attemptNumber);
-
-    return savedDelivery;
+  public Delivery findById(UUID deliveryId) {
+    return deliveryRepository
+        .findById(deliveryId)
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundException(
+                    ResponseCode.RESOURCE_NOT_FOUND, "Delivery not found"));
   }
 
   public List<DeliveryResponse> findByNotificationId(UUID notificationId) {
@@ -82,26 +95,38 @@ public class DeliveryService {
 
     Delivery delivery = findDeliveryById(deliveryId);
     delivery.markDelivered(costAmount, costCurrency, providerMessageId, providerResponse);
-    deliveryRepository.save(delivery);
 
-    log.info(
-        "Delivery succeeded - deliveryId={} notificationId={} attemptNumber={}",
-        deliveryId,
-        delivery.getNotification().getId(),
-        delivery.getAttemptNumber());
+    auditTemplate.execute(
+        delivery,
+        delivery.getOrganizationId(),
+        DomainEvents.Deliveries.DELIVERED,
+        () -> {
+          deliveryRepository.save(delivery);
+          log.info(
+              "Delivery succeeded - deliveryId={} notificationId={} attemptNumber={}",
+              deliveryId,
+              delivery.getNotification().getId(),
+              delivery.getAttemptNumber());
+        });
   }
 
   @Transactional
   public void recordChannelDisabled(UUID deliveryId) {
     Delivery delivery = findDeliveryById(deliveryId);
     delivery.markChannelDisabled();
-    deliveryRepository.save(delivery);
 
-    log.warn(
-        "Channel disabled - deliveryId={} notificationId={} attemptNumber={}",
-        deliveryId,
-        delivery.getNotification().getId(),
-        delivery.getAttemptNumber());
+    auditTemplate.execute(
+        delivery,
+        delivery.getOrganizationId(),
+        DomainEvents.Deliveries.CHANNEL_DISABLED,
+        () -> {
+          deliveryRepository.save(delivery);
+          log.warn(
+              "Channel disabled - deliveryId={} notificationId={} attemptNumber={}",
+              deliveryId,
+              delivery.getNotification().getId(),
+              delivery.getAttemptNumber());
+        });
   }
 
   @Transactional
@@ -109,60 +134,93 @@ public class DeliveryService {
       UUID deliveryId,
       String errorCode,
       String errorMessage,
-      Map<String, Serializable> providerResponse,
-      OffsetDateTime nextRetryAt) {
+      Map<String, Serializable> providerResponse) {
 
     Delivery delivery = findDeliveryById(deliveryId);
-    delivery.markFailed(errorCode, errorMessage, providerResponse, nextRetryAt);
-    deliveryRepository.save(delivery);
+    delivery.markFailed(errorCode, errorMessage, providerResponse);
 
-    log.warn(
-        "Delivery failed - deliveryId={} notificationId={} attemptNumber={} errorCode={}",
-        deliveryId,
-        delivery.getNotification().getId(),
-        delivery.getAttemptNumber(),
-        errorCode);
+    auditTemplate.execute(
+        delivery,
+        delivery.getOrganizationId(),
+        DomainEvents.Deliveries.FAILED,
+        () -> {
+          deliveryRepository.save(delivery);
+          log.warn(
+              "Delivery failed - deliveryId={} notificationId={} attemptNumber={} errorCode={}",
+              deliveryId,
+              delivery.getNotification().getId(),
+              delivery.getAttemptNumber(),
+              errorCode);
+        });
   }
 
   @Transactional
   public void recordInvalidRecipient(UUID deliveryId, String errorCode, String errorMessage) {
-
     Delivery delivery = findDeliveryById(deliveryId);
     delivery.markInvalidRecipient(errorCode, errorMessage);
-    deliveryRepository.save(delivery);
 
-    log.warn(
-        "Invalid recipient - deliveryId={} notificationId={} attemptNumber={}",
-        deliveryId,
-        delivery.getNotification().getId(),
-        delivery.getAttemptNumber());
+    auditTemplate.execute(
+        delivery,
+        delivery.getOrganizationId(),
+        DomainEvents.Deliveries.INVALID_RECIPIENT,
+        () -> {
+          deliveryRepository.save(delivery);
+          log.warn(
+              "Invalid recipient - deliveryId={} notificationId={} attemptNumber={}",
+              deliveryId,
+              delivery.getNotification().getId(),
+              delivery.getAttemptNumber());
+        });
   }
 
   @Transactional
-  public void recordRateLimited(UUID deliveryId, Integer attemptNumber) {
+  public void recordOffline(UUID deliveryId) {
     Delivery delivery = findDeliveryById(deliveryId);
-    delivery.markRateLimited(calculateNextRetryAt(attemptNumber));
-    deliveryRepository.save(delivery);
+    delivery.markOffline();
+
+    auditTemplate.execute(
+        delivery,
+        delivery.getOrganizationId(),
+        DomainEvents.Deliveries.OFFLINE,
+        () -> {
+          deliveryRepository.save(delivery);
+          log.debug(
+              "SSE recipient offline - deliveryId={} notificationId={} attemptNumber={}",
+              deliveryId,
+              delivery.getNotification().getId(),
+              delivery.getAttemptNumber());
+        });
   }
 
   @Transactional
-  public void recordTimeout(UUID deliveryId, Integer attemptNumber) {
+  public void recordRateLimited(UUID deliveryId) {
     Delivery delivery = findDeliveryById(deliveryId);
-    delivery.markTimeout(calculateNextRetryAt(attemptNumber));
-    deliveryRepository.save(delivery);
+    delivery.markRateLimited();
 
-    log.warn(
-        "Delivery timed out - deliveryId={} notificationId={} attemptNumber={} nextRetryAt={}",
-        deliveryId,
-        delivery.getNotification().getId(),
-        delivery.getAttemptNumber(),
-        delivery.getNextRetryAt());
+    auditTemplate.execute(
+        delivery,
+        delivery.getOrganizationId(),
+        DomainEvents.Deliveries.RATE_LIMITED,
+        () -> deliveryRepository.save(delivery));
   }
 
-  private OffsetDateTime calculateNextRetryAt(Integer attemptNumber) {
-    int delaySeconds = BASE_BACKOFF_SECONDS * (int) Math.pow(2, attemptNumber - 1.0);
-    delaySeconds = Math.min(delaySeconds, MAX_BACKOFF_SECONDS);
-    return OffsetDateTime.now(ZoneOffset.UTC).plusSeconds(delaySeconds);
+  @Transactional
+  public void recordTimeout(UUID deliveryId) {
+    Delivery delivery = findDeliveryById(deliveryId);
+    delivery.markTimeout();
+
+    auditTemplate.execute(
+        delivery,
+        delivery.getOrganizationId(),
+        DomainEvents.Deliveries.TIMEOUT,
+        () -> {
+          deliveryRepository.save(delivery);
+          log.warn(
+              "Delivery timed out - deliveryId={} notificationId={} attemptNumber={}",
+              deliveryId,
+              delivery.getNotification().getId(),
+              delivery.getAttemptNumber());
+        });
   }
 
   private Delivery findDeliveryById(UUID deliveryId) {

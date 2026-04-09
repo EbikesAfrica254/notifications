@@ -80,7 +80,7 @@ cp .env.example .env
 # 2. Start infrastructure dependencies
 docker compose up -d
 
-# 3. Run the service
+# 3. Run the services
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
 

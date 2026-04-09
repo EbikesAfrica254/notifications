@@ -57,13 +57,15 @@ spring:
         default_schema: notifications
         format_sql: false
         show_sql: false
+        type:
+          json_format_mapper: com.ebikes.notifications.configurations.HibernateJsonFormatMapperConfiguration
 
   liquibase:
-    change-log: classpath:database/changelog.yaml
+    change-log: classpath:database/changelog/changelog.yaml
     enabled: true
     liquibase-schema: notifications
     parameters:
-      searchPath: classpath:database/
+      searchPath: classpath:database/changelog/
 
   rabbitmq:
     host: ${SPRING_RABBITMQ_HOST}
@@ -72,10 +74,42 @@ spring:
 
   security:
     oauth2:
+      client:
+        registration:
+          organizations:
+            provider: keycloak
+            client-id: ${NOTIFICATIONS_CLIENT_ID}
+            client-secret: ${NOTIFICATIONS_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            client-authentication-method: client_secret_basic
+        provider:
+          keycloak:
+            issuer-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI}
       resourceserver:
         jwt:
           issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
           jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI}
+
+  threads:
+    virtual:
+      enabled: true
+
+  task:
+    scheduling:
+      thread-name-prefix: notifications-scheduler-
+      simple:
+        concurrency-limit: 4
+
+cache:
+  organization:
+    ttl-minutes: 30
+    key-prefix: notifications
+
+clients:
+  client:
+    support-url: ${CLIENT_SUPPORT_URL}
+  ops:
+    base-url: ${OPS_BASE_URL}
 
 encryption:
   key: ${ENCRYPTION_KEY}
@@ -83,6 +117,7 @@ encryption:
 logging:
   level:
     root: INFO
+    com.ebikes.notifications: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
@@ -131,7 +166,13 @@ security:
   public-endpoints:
     - /actuator/health
     - /actuator/prometheus
+    - /debug/sse/send/*
   scopes:
     - email
     - openid
     - profile
+
+services:
+  organizations:
+    base-url: ${ORGANIZATION_SERVICE_BASE_URL}
+    client-registration-id: organizations

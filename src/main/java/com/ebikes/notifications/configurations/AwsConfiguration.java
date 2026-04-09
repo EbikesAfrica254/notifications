@@ -2,6 +2,7 @@ package com.ebikes.notifications.configurations;
 
 import java.net.URI;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,6 +23,7 @@ public class AwsConfiguration {
   private final NotificationProperties notificationProperties;
 
   @Bean(destroyMethod = "close")
+  @ConditionalOnMissingBean(SesClient.class)
   public SesClient sesClient() {
     NotificationProperties.Ses ses = notificationProperties.getChannels().getEmail().getSes();
 

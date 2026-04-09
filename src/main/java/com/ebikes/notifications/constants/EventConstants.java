@@ -2,78 +2,13 @@ package com.ebikes.notifications.constants;
 
 import com.ebikes.notifications.support.references.ReferenceGenerator;
 
-import lombok.experimental.UtilityClass;
-
-@UtilityClass
-public class EventConstants {
-
-  public static final class EventTypes {
-
-    private EventTypes() {
-      // prevent instantiation
-    }
-
-    public static final class Notifications {
-
-      private Notifications() {
-        // prevent instantiation
-      }
-
-      public static final String CANCELLED = EventSource.HOST_SERVICE + ".notification.cancelled";
-      public static final String DELIVERED = EventSource.HOST_SERVICE + ".notification.delivered";
-      public static final String FAILED = EventSource.HOST_SERVICE + ".notification.failed";
-    }
-
-    public static final class Preferences {
-
-      private Preferences() {
-        // prevent instantiation
-      }
-
-      public static final class Organization {
-
-        private Organization() {
-          throw new UnsupportedOperationException(
-              ApplicationConstants.CLASS_CANNOT_BE_INSTANTIATED);
-        }
-
-        public static final String CREATED =
-            EventSource.HOST_SERVICE + ".organization-preference.created";
-        public static final String DELETED =
-            EventSource.HOST_SERVICE + ".organization-preference.deleted";
-        public static final String UPDATED =
-            EventSource.HOST_SERVICE + ".organization-preference.updated";
-      }
-
-      public static final class User {
-
-        private User() {
-          throw new UnsupportedOperationException(
-              ApplicationConstants.CLASS_CANNOT_BE_INSTANTIATED);
-        }
-
-        public static final String CREATED = EventSource.HOST_SERVICE + ".user-preference.created";
-        public static final String DELETED = EventSource.HOST_SERVICE + ".user-preference.deleted";
-        public static final String UPDATED = EventSource.HOST_SERVICE + ".user-preference.updated";
-      }
-    }
-
-    public static final class Templates {
-
-      private Templates() {
-        // prevent instantiation
-      }
-
-      public static final String ACTIVATED = EventSource.HOST_SERVICE + ".template.activated";
-      public static final String CREATED = EventSource.HOST_SERVICE + ".template.created";
-      public static final String DEACTIVATED = EventSource.HOST_SERVICE + ".template.deactivated";
-      public static final String UPDATED = EventSource.HOST_SERVICE + ".template.updated";
-    }
+public final class EventConstants {
+  private EventConstants() {
+    // prevent instantiation
   }
 
-  public static final class EventSource {
-
-    private EventSource() {
+  public static final class Source {
+    private Source() {
       // prevent instantiation
     }
 
@@ -84,44 +19,86 @@ public class EventConstants {
     }
   }
 
-  public static final class MessageHeaders {
-
-    private MessageHeaders() {
+  public static final class DomainEvents {
+    private DomainEvents() {
       // prevent instantiation
     }
 
-    public static final String EVENT_TYPE = "eventType";
-    public static final String OUTBOX_ID = "outboxId";
-    public static final String ROUTING_KEY = "routingKey";
+    public static final class Deliveries {
+      private Deliveries() {
+        // prevent instantiation
+      }
+
+      public static final String ATTEMPTED = Source.HOST_SERVICE + ".delivery.attempted";
+      public static final String CHANNEL_DISABLED =
+          Source.HOST_SERVICE + ".delivery.channel-disabled";
+      public static final String DELIVERED = Source.HOST_SERVICE + ".delivery.delivered";
+      public static final String FAILED = Source.HOST_SERVICE + ".delivery.failed";
+      public static final String INVALID_RECIPIENT =
+          Source.HOST_SERVICE + ".delivery.invalid-recipient";
+      public static final String OFFLINE = Source.HOST_SERVICE + ".delivery.offline";
+      public static final String RATE_LIMITED = Source.HOST_SERVICE + ".delivery.rate-limited";
+      public static final String TIMEOUT = Source.HOST_SERVICE + ".delivery.timeout";
+    }
+
+    public static final class Notifications {
+      private Notifications() {
+        // prevent instantiation
+      }
+
+      public static final String CANCELLED = Source.HOST_SERVICE + ".notification.cancelled";
+      public static final String CREATED = Source.HOST_SERVICE + ".notification.created";
+      public static final String DELIVERED = Source.HOST_SERVICE + ".notification.delivered";
+      public static final String FAILED = Source.HOST_SERVICE + ".notification.failed";
+    }
+
+    public static final class Preferences {
+      private Preferences() {
+        // prevent instantiation
+      }
+
+      public static final class Organization {
+        private Organization() {
+          // prevent instantiation
+        }
+
+        public static final String CREATED =
+            Source.HOST_SERVICE + ".organization-preference.created";
+        public static final String DELETED =
+            Source.HOST_SERVICE + ".organization-preference.deleted";
+        public static final String UPDATED =
+            Source.HOST_SERVICE + ".organization-preference.updated";
+      }
+
+      public static final class User {
+        private User() {
+          // prevent instantiation
+        }
+
+        public static final String CREATED = Source.HOST_SERVICE + ".user-preference.created";
+        public static final String DELETED = Source.HOST_SERVICE + ".user-preference.deleted";
+        public static final String UPDATED = Source.HOST_SERVICE + ".user-preference.updated";
+      }
+    }
+
+    public static final class Templates {
+      private Templates() {
+        // prevent instantiation
+      }
+
+      public static final String ACTIVATED = Source.HOST_SERVICE + ".template.activated";
+      public static final String CREATED = Source.HOST_SERVICE + ".template.created";
+      public static final String DEACTIVATED = Source.HOST_SERVICE + ".template.deactivated";
+      public static final String UPDATED = Source.HOST_SERVICE + ".template.updated";
+    }
   }
 
-  public static final class RoutingKeys {
-
-    private RoutingKeys() {
+  public static final class ExternalContracts {
+    private ExternalContracts() {
       // prevent instantiation
     }
 
-    private static final String IAM_HOST_SERVICE = "iam";
-    private static final String ORGANIZATIONS_HOST_SERVICE = "organizations";
-
-    public static final String NOTIFICATIONS_TEMPLATE_AUDIT =
-        audit(EventSource.HOST_SERVICE + ".template");
-
-    // inbound routing keys - external contracts, hardcoded intentionally
-    public static final String ORGANIZATION_CONFIGURATION =
-        configuration(ORGANIZATIONS_HOST_SERVICE + ".organization");
-    public static final String USER_CONFIGURATION = configuration(IAM_HOST_SERVICE + ".user");
-
-    public static String audit(String domain) {
-      return domain + ".audit";
-    }
-
-    public static String configuration(String domain) {
-      return domain + ".configuration";
-    }
-
-    public static String notifications(String channel) {
-      return "notifications." + channel.toLowerCase();
-    }
+    public static final String ORGANIZATION_CONFIGURATION = "organizations.organization";
+    public static final String USER_CONFIGURATION = "notifications.user";
   }
 }

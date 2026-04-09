@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public enum WhatsAppMessageType {
   BUTTONS,
+  CTA_URL,
   DOCUMENT,
   LIST,
   TEXT;

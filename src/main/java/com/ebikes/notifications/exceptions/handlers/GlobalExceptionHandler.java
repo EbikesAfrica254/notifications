@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
       ExternalServiceException ex, HttpServletRequest request) {
 
     log.error(
-        "External service error: endpoint={}, code={}, message={}, path={}",
+        "External services error: endpoint={}, code={}, message={}, path={}",
         ex.getEndpoint(),
         ex.getResponseCode().getCode(),
         ex.getMessage(),

@@ -15,8 +15,8 @@ import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
 
 import com.ebikes.notifications.database.models.TemplateVariable;
-import com.ebikes.notifications.enums.ContentType;
 import com.ebikes.notifications.enums.ResponseCode;
+import com.ebikes.notifications.enums.TemplateContentType;
 import com.ebikes.notifications.exceptions.TemplateException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -63,7 +63,7 @@ public class TemplateProcessor {
   }
 
   public String render(
-      ContentType contentType,
+      TemplateContentType templateContentType,
       String templateContent,
       List<TemplateVariable> variableDefinitions,
       Map<String, Serializable> variables) {
@@ -76,7 +76,7 @@ public class TemplateProcessor {
 
       validateRequiredVariables(definitions, variables);
 
-      TemplateMode templateMode = mapContentTypeToTemplateMode(contentType);
+      TemplateMode templateMode = mapContentTypeToTemplateMode(templateContentType);
 
       TemplateEngine engine = templateEngines.get(templateMode);
       if (engine == null) {
@@ -92,10 +92,10 @@ public class TemplateProcessor {
       validateProcessingResult(result, templateContent);
 
       log.debug(
-          "Template processing completed - mode={} contentType={} originalLength={}"
+          "Template processing completed - mode={} templateContentType={} originalLength={}"
               + " processedLength={}",
           templateMode,
-          contentType,
+          templateContentType,
           templateContent.length(),
           result.length());
 
@@ -104,7 +104,10 @@ public class TemplateProcessor {
     } catch (TemplateException e) {
       throw e;
     } catch (Exception e) {
-      log.error("Unexpected error during template processing - contentType={}", contentType, e);
+      log.error(
+          "Unexpected error during template processing - templateContentType={}",
+          templateContentType,
+          e);
       throw new TemplateException(
           ResponseCode.TEMPLATE_PROCESSING_ERROR,
           "Failed to process template: " + e.getMessage(),
@@ -155,10 +158,10 @@ public class TemplateProcessor {
         templateEngines.keySet());
   }
 
-  private TemplateMode mapContentTypeToTemplateMode(ContentType contentType) {
-    return switch (contentType) {
+  private TemplateMode mapContentTypeToTemplateMode(TemplateContentType templateContentType) {
+    return switch (templateContentType) {
       case HTML -> TemplateMode.HTML;
-      case PLAIN_TEXT -> TemplateMode.TEXT;
+      case JSON, PLAIN_TEXT -> TemplateMode.TEXT;
     };
   }
 
