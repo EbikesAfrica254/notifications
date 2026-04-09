@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01-content-type-channel-constraint
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: constraints/01-content-type-channel-constraint.sql
+            relativeToChangelogFile: true
+  - changeSet:
+      id: 02-delivery-status-constraint
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: constraints/02-delivery-status-constraint.sql
+            relativeToChangelogFile: true
+  - changeSet:
+      id: 03-template-version-non-negative
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: constraints/03-template-version-non-negative.sql
+            relativeToChangelogFile: true

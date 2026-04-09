@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01-drop-next-retry-at
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: fields/01-drop-next-retry-at.sql
+            relativeToChangelogFile: true
