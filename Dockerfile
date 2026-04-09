@@ -1,4 +1,5 @@
-FROM eclipse-temurin:21-jre-alpine@sha256:9f1de3e01a3c43e2f158abf408ec761813da639961bde93427c1ea42a619a09b
+# eclipse-temurin 21-jre-alpine as of 2026-04-09
+FROM eclipse-temurin@sha256:2ad3e67ed80e421b8a2e0e733805dcc29ae2fcd2c0f5b4d1d9dad3c4ac86e45c
 
 RUN apk add --no-cache shadow tzdata
 
@@ -16,7 +17,7 @@ COPY --chown=appuser:appgroup application/ ./
 
 ENV TZ=Africa/Nairobi
 
-EXPOSE 8091
+EXPOSE 8086
 
 USER appuser
 
@@ -27,7 +28,7 @@ ARG VERSION
 ARG BUILD_DATE
 ARG VCS_REF
 
-LABEL org.opencontainers.image.title="eBikes Africa notifications service"
+LABEL org.opencontainers.image.title="Ebikes Africa notifications service"
 LABEL org.opencontainers.image.description=""
 LABEL org.opencontainers.image.version="${VERSION}"
 LABEL org.opencontainers.image.created="${BUILD_DATE}"
