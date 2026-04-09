@@ -1,5 +1,5 @@
 # eclipse-temurin 21-jre-alpine as of 2026-04-09
-FROM eclipse-temurin@sha256:2ad3e67ed80e421b8a2e0e733805dcc29ae2fcd2c0f5b4d1d9dad3c4ac86e45c
+FROM eclipse-temurin@sha256:6ad8ed080d9be96b61438ec3ce99388e294af216ed57356000c06070e85c5d5d
 
 RUN apk add --no-cache shadow tzdata
 
@@ -10,10 +10,10 @@ RUN addgroup -S appgroup && \
     mkdir -p /app/logs && \
     chown -R appuser:appgroup /app
 
-COPY --chown=appuser:appgroup dependencies/ ./
-COPY --chown=appuser:appgroup spring-boot-loader/ ./
-COPY --chown=appuser:appgroup snapshot-dependencies*/ ./
-COPY --chown=appuser:appgroup application/ ./
+COPY --chown=appuser:appgroup --chmod=550 dependencies/ ./
+COPY --chown=appuser:appgroup --chmod=550 spring-boot-loader/ ./
+COPY --chown=appuser:appgroup --chmod=550 snapshot-dependencies*/ ./
+COPY --chown=appuser:appgroup --chmod=550 application/ ./
 
 ENV TZ=Africa/Nairobi
 
