@@ -1,0 +1,81 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01-seed-templates
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: seed/01-seed-templates.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 02-update-account-verification
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: seed/02-update-account-verification.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 03-update-password-reset
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: seed/03-update-password-reset.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 04-seed-order-completed
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: seed/04-seed-order-completed.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 05-seed-order-cancelled
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: seed/05-seed-order-cancelled.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 06-seed-organization-welcome
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: seed/06-seed-organization-welcome.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 07-seed-user-invitation-new
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: seed/07-seed-user-invitation-new.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 08-seed-user-invitation-existing
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: seed/08-seed-user-invitation-existing.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 09-seed-order-escalated
+      author: mango-habanero
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: seed/09-seed-order-escalated.sql
+            relativeToChangelogFile: true
