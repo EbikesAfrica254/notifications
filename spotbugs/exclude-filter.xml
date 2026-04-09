@@ -72,8 +72,8 @@
     -->
     <Match>
         <Or>
-            <Class name="com.ebikes.notifications.adapters.sms.TaifaMobileSmsAdapter"/>
-            <Class name="com.ebikes.notifications.adapters.whatsapp.MetaWhatsAppAdapter"/>
+            <Class name="com.ebikes.notifications.adapters.channels.sms.TaifaMobileSmsAdapter"/>
+            <Class name="com.ebikes.notifications.adapters.channels.whatsapp.MetaWhatsAppAdapter"/>
         </Or>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
@@ -105,6 +105,34 @@
     <Match>
         <Package name="~com\.ebikes\.notifications\.database\.entities"/>
         <Bug pattern="SE_BAD_FIELD"/>
+    </Match>
+
+    <!--
+      EI_EXPOSE_REP2: false positive on Spring-managed collaborator injection.
+
+      SpotBugs flags storing an injected RestClient by reference as representation
+      exposure. RestClient is a Spring-managed interface with no externally mutable
+      state — defensive copying is neither meaningful nor possible for interface types.
+    -->
+    <Match>
+        <Class name="com.ebikes.notifications.adapters.organizations.OrganizationServiceAdapter"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!--
+      EI_EXPOSE_REP2: false positive on Spring-managed singleton injection.
+
+      RedisTemplate is a Spring-managed infrastructure bean holding connection pool state —
+      it cannot be defensively copied and must be shared. UserPreferenceService is a
+      Spring-managed @Service; storing a collaborator by reference is the standard injection
+      pattern and the type carries no mutable representation that the caller could corrupt.
+    -->
+    <Match>
+        <Or>
+            <Class name="com.ebikes.notifications.services.cache.OrganizationCacheService"/>
+            <Class name="com.ebikes.notifications.services.notifications.MessageProcessor"/>
+        </Or>
+        <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
 
 </FindBugsFilter>

@@ -10,7 +10,7 @@
 
       Goal:
       - enforce only high-value layering boundaries
-      - avoid default-deny breakage across a single Spring Boot service
+      - avoid default-deny breakage across a single Spring Boot services
       - let Spotless / ImportOrder handle formatting concerns separately
     -->
 
