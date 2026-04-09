@@ -60,7 +60,7 @@ class EncryptedStringConverterTest {
     @DisplayName("should throw IllegalStateException when key is invalid")
     void shouldThrowOnInvalidKey() {
       assertThatThrownBy(() -> new EncryptedStringConverter("not-valid-base64!!!"))
-              .isInstanceOf(IllegalArgumentException.class);
+          .isInstanceOf(IllegalArgumentException.class);
     }
   }
 
@@ -79,18 +79,18 @@ class EncryptedStringConverterTest {
     void shouldThrowForTamperedCiphertext() {
       String valid = converter.convertToDatabaseColumn("secret");
       byte[] payload = Base64.getDecoder().decode(valid);
-      payload[payload.length - 1] ^= 0xFF; // flip bits in auth tag
+      payload[payload.length - 1] ^= (byte) 0xFF; // flip bits in auth tag
       String tampered = Base64.getEncoder().encodeToString(payload);
 
       assertThatThrownBy(() -> converter.convertToEntityAttribute(tampered))
-              .isInstanceOf(IllegalStateException.class);
+          .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("should throw IllegalStateException for arbitrary invalid input")
     void shouldThrowForInvalidInput() {
       assertThatThrownBy(() -> converter.convertToEntityAttribute("not-valid-base64!!!"))
-              .isInstanceOf(IllegalStateException.class);
+          .isInstanceOf(IllegalStateException.class);
     }
   }
 
