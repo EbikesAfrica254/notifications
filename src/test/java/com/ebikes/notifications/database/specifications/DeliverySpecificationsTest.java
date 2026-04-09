@@ -80,6 +80,7 @@ class DeliverySpecificationsTest extends AbstractRepositoryTest {
         deliveryRepository.findAll(
             DeliverySpecifications.hasNotificationId(ownNotification.getId()));
 
+    assertThat(results).isNotEmpty();
     assertThat(results).extracting(Delivery::getId).doesNotContain(otherDelivery.getId());
   }
 
@@ -102,6 +103,7 @@ class DeliverySpecificationsTest extends AbstractRepositoryTest {
     List<Delivery> results =
         deliveryRepository.findAll(DeliverySpecifications.forNotification(ownNotification.getId()));
 
+    assertThat(results).isNotEmpty();
     assertThat(results).extracting(Delivery::getId).doesNotContain(otherDelivery.getId());
   }
 }
