@@ -1,0 +1,202 @@
+server:
+  port: 0
+
+spring:
+  # Explicitly exclude all infrastructure autoconfiguration that requires a running
+  # external services. Slice tests (@WebMvcTest, @DataJpaTest) must never attempt
+  # to connect to Redis, RabbitMQ, or any host-local services. Each test layer
+  # provides its own infrastructure via Testcontainers or mocks — never via
+  # fallback to whatever happens to be running on the developer's machine.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.security.oauth2.client.autoconfigure.OAuth2ClientAutoConfiguration
+      - org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration
+
+  application:
+    name: ebikes-notifications
+
+  cloud:
+    function:
+      definition: incomingEventConsumer
+    stream:
+      default-binder: rabbit
+      bindings:
+        incomingEventConsumer-in-0:
+          destination: ebikes.domain-events
+          group: ebikes.notifications.incoming
+          consumer:
+            back-off-initial-interval: 1000
+            back-off-max-interval: 10000
+            back-off-multiplier: 2.0
+            max-attempts: 3
+        eventPublisher-out-0:
+          destination: ebikes.domain-events
+      rabbit:
+        bindings:
+          incomingEventConsumer-in-0:
+            consumer:
+              bindQueue: true
+              declareExchange: true
+              queueNameGroupOnly: true
+          eventPublisher-out-0:
+            producer:
+              declareExchange: true
+              routingKeyExpression: "headers['routingKey']"
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ""
+      repositories:
+        enabled: false
+      ssl:
+        enabled: false
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/placeholder
+    username: placeholder
+    password: placeholder
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: notifications
+        format_sql: false
+        show_sql: false
+        type:
+          json_format_mapper: com.ebikes.notifications.configurations.HibernateJsonFormatMapperConfiguration
+
+  liquibase:
+    change-log: classpath:database/changelog/changelog.yaml
+    enabled: true
+    liquibase-schema: notifications
+    parameters:
+      searchPath: classpath:database/changelog/
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+  security:
+    oauth2:
+      client:
+        registration:
+          organizations:
+            provider: keycloak
+            client-id: test-client
+            client-secret: test-secret
+            authorization-grant-type: client_credentials
+            client-authentication-method: client_secret_basic
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:0/realms/ebikes
+      resourceserver:
+        jwt:
+          # Placeholder values — never resolved directly from this file.
+          # AbstractControllerTest overrides these via @DynamicPropertySource
+          # once WireMock has started and its port is known.
+          # AbstractIntegrationTest overrides these via @DynamicPropertySource
+          # once the Keycloak Testcontainer has started.
+          # A test that reaches this placeholder and attempts to connect has
+          # a misconfigured base class — fail fast is the correct behaviour.
+          jwk-set-uri: http://localhost:0/realms/ebikes/protocol/openid-connect/certs
+          issuer-uri: http://localhost:0/realms/ebikes
+
+  threads:
+    virtual:
+      enabled: true
+
+  task:
+    scheduling:
+      thread-name-prefix: notifications-scheduler-
+      simple:
+        concurrency-limit: 4
+
+cache:
+  organization:
+    ttl-minutes: 30
+    key-prefix: notifications
+
+clients:
+  client:
+    support-url: http://localhost:0/support
+  ops:
+    base-url: http://localhost:0/ops
+
+encryption:
+  key: dGVzdC1rZXktMTZieXRlcw==
+
+logging:
+  level:
+    root: INFO
+    com.ebikes.notifications: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  endpoint:
+    health:
+      show-details: ${ACTUATOR_HEALTH_DETAILS:never}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+notification:
+  channels:
+    email:
+      enabled: false
+      rate-limit: 500
+      ses:
+        endpoint: ""
+        region: us-east-1
+        sender-address: test@sender.test
+    sms:
+      enabled: false
+      rate-limit: 100
+      taifa-mobile:
+        api-key: test-api-key
+        default-cost: 0.35
+        sender-name: test-sender-name
+    sse:
+      connection-limit: 1000
+      connection-timeout: 600000
+      enabled: true
+      heartbeat-interval: PT30S
+      rate-limit: 1000
+    whatsapp:
+      enabled: false
+      meta:
+        api-version: v22
+        app-id: test-app-id
+        app-secret: test-app-secret
+        phone-number-id: 1234567890
+        system-user-token: test-system-user-token
+      rate-limit: 80
+
+security:
+  public-endpoints:
+    - /actuator/health
+    - /actuator/prometheus
+  scopes:
+    - email
+    - openid
+    - profile
+
+services:
+  organizations:
+    base-url: http://localhost:0/organizations
+    client-registration-id: organizations
