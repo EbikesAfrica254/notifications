@@ -20,13 +20,15 @@ import tools.jackson.databind.ObjectMapper;
 @Slf4j
 public class RedisConfiguration {
 
+  public static final String IAM_REDIS_TEMPLATE = "iamRedisTemplate";
   public static final String ORGANIZATION_REDIS_TEMPLATE = "organizationRedisTemplate";
 
   @Bean
   public RedisCacheConfiguration cacheConfiguration(CacheProperties cacheProperties) {
     return RedisCacheConfiguration.defaultCacheConfig()
         .disableCachingNullValues()
-        .computePrefixWith(cacheName -> cacheProperties.getKeyPrefix() + ":" + cacheName + ":")
+        .computePrefixWith(
+            cacheName -> cacheProperties.getOrganizations().getKeyPrefix() + ":" + cacheName + ":")
         .serializeValuesWith(
             RedisSerializationContext.SerializationPair.fromSerializer(
                 GenericJacksonJsonRedisSerializer.builder().build()));
@@ -43,13 +45,22 @@ public class RedisConfiguration {
     };
   }
 
+  @Bean(IAM_REDIS_TEMPLATE)
+  public RedisTemplate<String, Object> iamRedisTemplate(
+      RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+    return buildRedisTemplate(connectionFactory, objectMapper);
+  }
+
   @Bean(ORGANIZATION_REDIS_TEMPLATE)
   public RedisTemplate<String, Object> organizationRedisTemplate(
       RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+    return buildRedisTemplate(connectionFactory, objectMapper);
+  }
 
+  private RedisTemplate<String, Object> buildRedisTemplate(
+      RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
     GenericJacksonJsonRedisSerializer serializer =
         new GenericJacksonJsonRedisSerializer(objectMapper);
-
     RedisTemplate<String, Object> template = new RedisTemplate<>();
     template.setConnectionFactory(connectionFactory);
     template.setKeySerializer(new StringRedisSerializer());
@@ -57,7 +68,6 @@ public class RedisConfiguration {
     template.setHashKeySerializer(new StringRedisSerializer());
     template.setHashValueSerializer(serializer);
     template.afterPropertiesSet();
-
     return template;
   }
 }

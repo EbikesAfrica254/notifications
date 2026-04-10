@@ -115,7 +115,10 @@
       state — defensive copying is neither meaningful nor possible for interface types.
     -->
     <Match>
-        <Class name="com.ebikes.notifications.adapters.organizations.OrganizationServiceAdapter"/>
+        <Or>
+            <Class name="com.ebikes.notifications.adapters.iam.IamServiceAdapter"/>
+            <Class name="com.ebikes.notifications.adapters.organizations.OrganizationsServiceAdapter"/>
+        </Or>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
 
@@ -129,7 +132,8 @@
     -->
     <Match>
         <Or>
-            <Class name="com.ebikes.notifications.services.cache.OrganizationCacheService"/>
+            <Class name="com.ebikes.notifications.services.cache.IamCacheService"/>
+            <Class name="com.ebikes.notifications.services.cache.OrganizationsCacheService"/>
             <Class name="com.ebikes.notifications.services.notifications.MessageProcessor"/>
         </Or>
         <Bug pattern="EI_EXPOSE_REP2"/>

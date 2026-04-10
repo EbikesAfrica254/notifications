@@ -28,22 +28,22 @@ import com.ebikes.notifications.dtos.adapters.organizations.Organization;
 import com.ebikes.notifications.dtos.responses.api.SuccessResponse;
 import com.ebikes.notifications.exceptions.ExternalServiceException;
 
-@DisplayName("OrganizationServiceAdapter")
+@DisplayName("OrganizationsServiceAdapter")
 @ExtendWith(MockitoExtension.class)
-class OrganizationServiceAdapterTest {
+class OrganizationsServiceAdapterTest {
 
   private static final String ORGANIZATION_ID = "org-1";
   private static final String BRANCH_ID = "branch-1";
 
   @Mock private RestClient restClient;
 
-  private OrganizationServiceAdapter adapter;
+  private OrganizationsServiceAdapter adapter;
   private RestClient.ResponseSpec responseSpec;
 
   @BeforeEach
   @SuppressWarnings({"unchecked", "rawtypes"})
   void setUp() {
-    adapter = new OrganizationServiceAdapter(restClient);
+    adapter = new OrganizationsServiceAdapter(restClient);
 
     RestClient.RequestHeadersUriSpec requestHeadersUriSpec =
         mock(RestClient.RequestHeadersUriSpec.class);
@@ -79,7 +79,8 @@ class OrganizationServiceAdapterTest {
     void shouldThrowWhenResponseIsNull() {
       when(responseSpec.body(any(ParameterizedTypeReference.class))).thenReturn(null);
 
-      assertThatThrownBy(() -> adapter.findOrganizationsByIds(Set.of(ORGANIZATION_ID)))
+      Set<String> organizationIds = Set.of(ORGANIZATION_ID);
+      assertThatThrownBy(() -> adapter.findOrganizationsByIds(organizationIds))
           .isInstanceOf(ExternalServiceException.class);
     }
 
@@ -90,7 +91,8 @@ class OrganizationServiceAdapterTest {
       when(responseSpec.body(any(ParameterizedTypeReference.class)))
           .thenReturn(new SuccessResponse<>("SUCCESS", null, null));
 
-      assertThatThrownBy(() -> adapter.findOrganizationsByIds(Set.of(ORGANIZATION_ID)))
+      Set<String> organizationIds = Set.of(ORGANIZATION_ID);
+      assertThatThrownBy(() -> adapter.findOrganizationsByIds(organizationIds))
           .isInstanceOf(ExternalServiceException.class);
     }
 
@@ -101,7 +103,8 @@ class OrganizationServiceAdapterTest {
       when(responseSpec.body(any(ParameterizedTypeReference.class)))
           .thenThrow(new RestClientException("connection refused"));
 
-      assertThatThrownBy(() -> adapter.findOrganizationsByIds(Set.of(ORGANIZATION_ID)))
+      Set<String> organizationIds = Set.of(ORGANIZATION_ID);
+      assertThatThrownBy(() -> adapter.findOrganizationsByIds(organizationIds))
           .isInstanceOf(ExternalServiceException.class);
     }
 
@@ -113,7 +116,8 @@ class OrganizationServiceAdapterTest {
           .thenThrow(
               HttpClientErrorException.create(HttpStatus.NOT_FOUND, "Not Found", null, null, null));
 
-      assertThatThrownBy(() -> adapter.findOrganizationsByIds(Set.of(ORGANIZATION_ID)))
+      Set<String> organizationIds = Set.of(ORGANIZATION_ID);
+      assertThatThrownBy(() -> adapter.findOrganizationsByIds(organizationIds))
           .isInstanceOf(ExternalServiceException.class);
     }
   }
@@ -141,7 +145,8 @@ class OrganizationServiceAdapterTest {
     void shouldThrowWhenResponseIsNull() {
       when(responseSpec.body(any(ParameterizedTypeReference.class))).thenReturn(null);
 
-      assertThatThrownBy(() -> adapter.findBranchesByIds(ORGANIZATION_ID, Set.of(BRANCH_ID)))
+      Set<String> branchIds = Set.of(BRANCH_ID);
+      assertThatThrownBy(() -> adapter.findBranchesByIds(ORGANIZATION_ID, branchIds))
           .isInstanceOf(ExternalServiceException.class);
     }
 
@@ -152,7 +157,8 @@ class OrganizationServiceAdapterTest {
       when(responseSpec.body(any(ParameterizedTypeReference.class)))
           .thenReturn(new SuccessResponse<>("SUCCESS", null, null));
 
-      assertThatThrownBy(() -> adapter.findBranchesByIds(ORGANIZATION_ID, Set.of(BRANCH_ID)))
+      Set<String> branchIds = Set.of(BRANCH_ID);
+      assertThatThrownBy(() -> adapter.findBranchesByIds(ORGANIZATION_ID, branchIds))
           .isInstanceOf(ExternalServiceException.class);
     }
 
@@ -163,7 +169,8 @@ class OrganizationServiceAdapterTest {
       when(responseSpec.body(any(ParameterizedTypeReference.class)))
           .thenThrow(new RestClientException("connection refused"));
 
-      assertThatThrownBy(() -> adapter.findBranchesByIds(ORGANIZATION_ID, Set.of(BRANCH_ID)))
+      Set<String> branchIds = Set.of(BRANCH_ID);
+      assertThatThrownBy(() -> adapter.findBranchesByIds(ORGANIZATION_ID, branchIds))
           .isInstanceOf(ExternalServiceException.class);
     }
 
@@ -175,7 +182,8 @@ class OrganizationServiceAdapterTest {
           .thenThrow(
               HttpClientErrorException.create(HttpStatus.NOT_FOUND, "Not Found", null, null, null));
 
-      assertThatThrownBy(() -> adapter.findBranchesByIds(ORGANIZATION_ID, Set.of(BRANCH_ID)))
+      Set<String> branchIds = Set.of(BRANCH_ID);
+      assertThatThrownBy(() -> adapter.findBranchesByIds(ORGANIZATION_ID, branchIds))
           .isInstanceOf(ExternalServiceException.class);
     }
   }

@@ -101,7 +101,10 @@ spring:
         concurrency-limit: 4
 
 cache:
-  organization:
+  iam:
+    ttl-minutes: 30
+    key-prefix: notifications
+  organizations:
     ttl-minutes: 30
     key-prefix: notifications
 
@@ -173,6 +176,9 @@ security:
     - profile
 
 services:
+  iam:
+    base-url: ${IAM_BASE_URL}
+    client-registration-id: iam
   organizations:
     base-url: ${ORGANIZATION_SERVICE_BASE_URL}
     client-registration-id: organizations

@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
-public class OrganizationServiceAdapter {
+public class OrganizationsServiceAdapter {
 
   private static final String ORGANIZATIONS_REFERENCE_ENDPOINT = "/organizations/reference";
   private static final String BRANCHES_REFERENCE_ENDPOINT =
@@ -28,7 +28,7 @@ public class OrganizationServiceAdapter {
 
   private final RestClient restClient;
 
-  public OrganizationServiceAdapter(
+  public OrganizationsServiceAdapter(
       @Qualifier("organizationServiceRestClient") RestClient restClient) {
     this.restClient = restClient;
   }

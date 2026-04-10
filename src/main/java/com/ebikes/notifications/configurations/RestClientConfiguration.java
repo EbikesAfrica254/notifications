@@ -10,35 +10,58 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.web.client.OAuth2ClientHttpRequestInterceptor;
 import org.springframework.web.client.RestClient;
 
-import com.ebikes.notifications.configurations.properties.OrganizationServiceProperties;
+import com.ebikes.notifications.configurations.properties.ServicesProperties;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
+@RequiredArgsConstructor
 public class RestClientConfiguration {
+
+  private final ServicesProperties servicesProperties;
 
   @Bean
   public RestClient organizationServiceRestClient(
       RestClient.Builder restClientBuilder,
       ClientRegistrationRepository clientRegistrationRepository,
-      OAuth2AuthorizedClientService authorizedClientService,
-      OrganizationServiceProperties organizationServiceProperties) {
+      OAuth2AuthorizedClientService authorizedClientService) {
+    return buildRestClient(
+        restClientBuilder,
+        clientRegistrationRepository,
+        authorizedClientService,
+        servicesProperties.getOrganizations());
+  }
 
+  @Bean
+  public RestClient iamServiceRestClient(
+      RestClient.Builder restClientBuilder,
+      ClientRegistrationRepository clientRegistrationRepository,
+      OAuth2AuthorizedClientService authorizedClientService) {
+    return buildRestClient(
+        restClientBuilder,
+        clientRegistrationRepository,
+        authorizedClientService,
+        servicesProperties.getIam());
+  }
+
+  private RestClient buildRestClient(
+      RestClient.Builder restClientBuilder,
+      ClientRegistrationRepository clientRegistrationRepository,
+      OAuth2AuthorizedClientService authorizedClientService,
+      ServicesProperties.ServiceConfiguration config) {
     OAuth2AuthorizedClientProvider authorizedClientProvider =
         OAuth2AuthorizedClientProviderBuilder.builder().clientCredentials().build();
-
     AuthorizedClientServiceOAuth2AuthorizedClientManager clientManager =
         new AuthorizedClientServiceOAuth2AuthorizedClientManager(
             clientRegistrationRepository, authorizedClientService);
     clientManager.setAuthorizedClientProvider(authorizedClientProvider);
-
     OAuth2ClientHttpRequestInterceptor requestInterceptor =
         new OAuth2ClientHttpRequestInterceptor(clientManager);
     requestInterceptor.setAuthorizationFailureHandler(
         OAuth2ClientHttpRequestInterceptor.authorizationFailureHandler(authorizedClientService));
-    requestInterceptor.setClientRegistrationIdResolver(
-        request -> organizationServiceProperties.getClientRegistrationId());
-
+    requestInterceptor.setClientRegistrationIdResolver(request -> config.getClientRegistrationId());
     return restClientBuilder
-        .baseUrl(organizationServiceProperties.getBaseUrl())
+        .baseUrl(config.getBaseUrl())
         .requestInterceptor(requestInterceptor)
         .build();
   }
