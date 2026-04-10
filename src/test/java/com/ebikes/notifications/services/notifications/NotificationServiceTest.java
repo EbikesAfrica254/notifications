@@ -93,6 +93,7 @@ class NotificationServiceTest {
 
     @Test
     @DisplayName("should cancel a PENDING notification and save")
+    @SuppressWarnings("unchecked")
     void shouldCancelPendingNotification() {
       Notification notification =
           NotificationFixtures.forOrganization(TEST_ORGANIZATION_ID, TEST_EMAIL);
@@ -154,7 +155,7 @@ class NotificationServiceTest {
           .thenReturn(Optional.empty());
       when(templateService.findByChannelAndName(ChannelType.EMAIL, "ORDER_COMPLETED"))
           .thenReturn(template);
-      when(templateVariableEnricher.enrich(anyString(), any())).thenReturn(Map.of());
+      when(templateVariableEnricher.enrich(any())).thenReturn(Map.of());
       when(templateProcessor.render(any(), anyString(), any(), any())).thenReturn("Rendered body");
       when(repository.save(any(Notification.class))).thenAnswer(inv -> inv.getArgument(0));
       doAnswer(inv -> inv.getArgument(3, ThrowingSupplier.class).get())
@@ -347,6 +348,7 @@ class NotificationServiceTest {
 
     @Test
     @DisplayName("should mark PENDING notification as PROCESSING and save without audit")
+    @SuppressWarnings("unchecked")
     void shouldMarkProcessingAndSave() {
       Notification notification =
           NotificationFixtures.forOrganization(TEST_ORGANIZATION_ID, TEST_EMAIL);
@@ -375,6 +377,7 @@ class NotificationServiceTest {
 
     @Test
     @DisplayName("should mark PROCESSING notification as DELIVERED and save")
+    @SuppressWarnings("unchecked")
     void shouldMarkDeliveredAndSave() {
       Notification notification =
           NotificationFixtures.forOrganization(TEST_ORGANIZATION_ID, TEST_EMAIL);
@@ -410,6 +413,7 @@ class NotificationServiceTest {
 
     @Test
     @DisplayName("should mark PROCESSING notification as FAILED and save")
+    @SuppressWarnings("unchecked")
     void shouldMarkFailedAndSave() {
       Notification notification =
           NotificationFixtures.forOrganization(TEST_ORGANIZATION_ID, TEST_EMAIL);
@@ -445,6 +449,7 @@ class NotificationServiceTest {
 
     @Test
     @DisplayName("should mark FAILED notification back to PENDING and save without audit")
+    @SuppressWarnings("unchecked")
     void shouldScheduleRetryAndSave() {
       Notification notification =
           NotificationFixtures.forOrganization(TEST_ORGANIZATION_ID, TEST_EMAIL);

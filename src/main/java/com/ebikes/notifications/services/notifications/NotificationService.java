@@ -183,8 +183,7 @@ public class NotificationService {
     Template template =
         templateService.findByChannelAndName(request.channel(), request.templateName());
 
-    Map<String, Serializable> variables =
-        templateVariableEnricher.enrich(request.organizationId(), request.variables());
+    Map<String, Serializable> variables = templateVariableEnricher.enrich(request);
 
     String messageBody =
         templateProcessor.render(
