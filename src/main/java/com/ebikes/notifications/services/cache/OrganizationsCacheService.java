@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import com.ebikes.notifications.adapters.organizations.OrganizationServiceAdapter;
+import com.ebikes.notifications.adapters.organizations.OrganizationsServiceAdapter;
 import com.ebikes.notifications.configurations.RedisConfiguration;
 import com.ebikes.notifications.configurations.properties.CacheProperties;
 import com.ebikes.notifications.dtos.adapters.organizations.Branch;
@@ -21,20 +21,20 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class OrganizationCacheService {
+public class OrganizationsCacheService {
 
   private static final String BRANCH_KEY_PREFIX = "notifications:branch:";
   private static final String ORGANIZATION_KEY_PREFIX = "notifications:organization:";
 
   private final Duration cacheTtl;
-  private final OrganizationServiceAdapter adapter;
+  private final OrganizationsServiceAdapter adapter;
   private final RedisTemplate<String, Object> redisTemplate;
 
-  public OrganizationCacheService(
+  public OrganizationsCacheService(
       CacheProperties cacheProperties,
-      OrganizationServiceAdapter adapter,
+      OrganizationsServiceAdapter adapter,
       @Qualifier(RedisConfiguration.ORGANIZATION_REDIS_TEMPLATE) RedisTemplate<String, Object> redisTemplate) {
-    this.cacheTtl = Duration.ofMinutes(cacheProperties.getTtlMinutes());
+    this.cacheTtl = Duration.ofMinutes(cacheProperties.getOrganizations().getTtlMinutes());
     this.adapter = adapter;
     this.redisTemplate = redisTemplate;
   }

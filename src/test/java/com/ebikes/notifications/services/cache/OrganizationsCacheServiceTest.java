@@ -22,14 +22,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
-import com.ebikes.notifications.adapters.organizations.OrganizationServiceAdapter;
+import com.ebikes.notifications.adapters.organizations.OrganizationsServiceAdapter;
 import com.ebikes.notifications.configurations.properties.CacheProperties;
 import com.ebikes.notifications.dtos.adapters.organizations.Branch;
 import com.ebikes.notifications.dtos.adapters.organizations.Organization;
 
-@DisplayName("OrganizationCacheService")
+@DisplayName("OrganizationsCacheService")
 @ExtendWith(MockitoExtension.class)
-class OrganizationCacheServiceTest {
+class OrganizationsCacheServiceTest {
 
   private static final String ORGANIZATION_ID_1 = "org-1";
   private static final String ORGANIZATION_ID_2 = "org-2";
@@ -47,15 +47,15 @@ class OrganizationCacheServiceTest {
 
   private final CacheProperties cacheProperties = new CacheProperties();
 
-  @Mock private OrganizationServiceAdapter adapter;
+  @Mock private OrganizationsServiceAdapter adapter;
   @Mock private RedisTemplate<String, Object> redisTemplate;
   @Mock private ValueOperations<String, Object> valueOps;
 
-  private OrganizationCacheService service;
+  private OrganizationsCacheService service;
 
   @BeforeEach
   void setUp() {
-    service = new OrganizationCacheService(cacheProperties, adapter, redisTemplate);
+    service = new OrganizationsCacheService(cacheProperties, adapter, redisTemplate);
   }
 
   @Nested
