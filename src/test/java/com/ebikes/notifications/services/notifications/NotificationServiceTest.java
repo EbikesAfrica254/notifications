@@ -42,7 +42,7 @@ import com.ebikes.notifications.exceptions.ResourceNotFoundException;
 import com.ebikes.notifications.mappers.NotificationMapper;
 import com.ebikes.notifications.services.templates.TemplateProcessor;
 import com.ebikes.notifications.services.templates.TemplateService;
-import com.ebikes.notifications.services.templates.TemplateVariableEnricher;
+import com.ebikes.notifications.services.templates.variables.VariableEnricher;
 import com.ebikes.notifications.support.audit.AuditTemplate;
 import com.ebikes.notifications.support.audit.ThrowingRunnable;
 import com.ebikes.notifications.support.audit.ThrowingSupplier;
@@ -66,7 +66,7 @@ class NotificationServiceTest {
   @Mock private NotificationRepository repository;
   @Mock private TemplateProcessor templateProcessor;
   @Mock private TemplateService templateService;
-  @Mock private TemplateVariableEnricher templateVariableEnricher;
+  @Mock private VariableEnricher variableEnricher;
 
   private NotificationService service;
 
@@ -80,7 +80,7 @@ class NotificationServiceTest {
             repository,
             templateProcessor,
             templateService,
-            templateVariableEnricher);
+            variableEnricher);
   }
 
   // -------------------------------------------------------------------------
@@ -155,7 +155,7 @@ class NotificationServiceTest {
           .thenReturn(Optional.empty());
       when(templateService.findByChannelAndName(ChannelType.EMAIL, "ORDER_COMPLETED"))
           .thenReturn(template);
-      when(templateVariableEnricher.enrich(any())).thenReturn(Map.of());
+      when(variableEnricher.enrich(any(), any())).thenReturn(Map.of());
       when(templateProcessor.render(any(), anyString(), any(), any())).thenReturn("Rendered body");
       when(repository.save(any(Notification.class))).thenAnswer(inv -> inv.getArgument(0));
       doAnswer(inv -> inv.getArgument(3, ThrowingSupplier.class).get())
