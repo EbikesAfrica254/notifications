@@ -47,7 +47,7 @@ public class IamCacheService {
       List<UserDetails> fetched = adapter.findUsersByIds(misses);
       fetched.forEach(
           user -> {
-            cached.put(user.id(), user);
+            cached.put(user.keycloakUserId(), user);
             cacheUser(user);
           });
     }
@@ -68,6 +68,6 @@ public class IamCacheService {
   }
 
   private void cacheUser(UserDetails user) {
-    redisTemplate.opsForValue().set(USER_KEY_PREFIX + user.id(), user, cacheTtl);
+    redisTemplate.opsForValue().set(USER_KEY_PREFIX + user.keycloakUserId(), user, cacheTtl);
   }
 }
