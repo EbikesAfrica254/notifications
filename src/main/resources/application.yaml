@@ -109,8 +109,10 @@ cache:
     key-prefix: notifications
 
 clients:
+  assets:
+    fallback-logo-url: ${FALLBACK_URL}
   client:
-    support-url: ${CLIENT_SUPPORT_URL}
+    base-url: ${CLIENT_BASE_URL}
   ops:
     base-url: ${OPS_BASE_URL}
 
@@ -177,8 +179,8 @@ security:
 
 services:
   iam:
-    base-url: ${IAM_BASE_URL}
-    client-registration-id: iam
+    base-url: ${IAM_SERVICE_BASE_URL}
+    client-registration-id: organizations
   organizations:
     base-url: ${ORGANIZATION_SERVICE_BASE_URL}
     client-registration-id: organizations

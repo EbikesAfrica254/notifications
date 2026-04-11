@@ -32,7 +32,7 @@ import com.ebikes.notifications.exceptions.ValidationException;
 import com.ebikes.notifications.mappers.NotificationMapper;
 import com.ebikes.notifications.services.templates.TemplateProcessor;
 import com.ebikes.notifications.services.templates.TemplateService;
-import com.ebikes.notifications.services.templates.TemplateVariableEnricher;
+import com.ebikes.notifications.services.templates.variables.VariableEnricher;
 import com.ebikes.notifications.support.audit.AuditTemplate;
 import com.ebikes.notifications.support.database.FilterUtilities;
 import com.ebikes.notifications.support.security.RecipientMaskingUtility;
@@ -46,16 +46,13 @@ import tools.jackson.databind.ObjectMapper;
 @Slf4j
 public class NotificationService {
 
-  private static final String VARIABLE_ENTITY_ID = "entityId";
-  private static final String VARIABLE_REFERENCE = "reference";
-
   private final AuditTemplate auditTemplate;
   private final NotificationMapper mapper;
   private final ObjectMapper objectMapper;
   private final NotificationRepository repository;
   private final TemplateProcessor templateProcessor;
   private final TemplateService templateService;
-  private final TemplateVariableEnricher templateVariableEnricher;
+  private final VariableEnricher variableEnricher;
 
   @Transactional
   public void cancel(UUID id) {
@@ -105,30 +102,8 @@ public class NotificationService {
   }
 
   @Transactional(readOnly = true)
-  public Page<NotificationSummaryResponse> search(NotificationFilter filter) {
-    Specification<Notification> specification =
-        NotificationSpecifications.buildSpecification(filter);
-    Pageable pageable =
-        FilterUtilities.buildPageable(filter, NotificationSpecifications.ALLOWED_SORT_FIELDS);
-
-    return repository.findAll(specification, pageable).map(mapper::toSummaryResponse);
-  }
-
-  @Transactional(readOnly = true)
   public NotificationResponse findById(UUID id) {
     return mapper.toResponse(findNotificationById(id));
-  }
-
-  @Transactional
-  public void markProcessing(UUID id) {
-    Notification notification = findNotificationById(id);
-    notification.markProcessing();
-    repository.save(notification);
-
-    log.info(
-        "Notification marked PROCESSING - id={} serviceReference={}",
-        id,
-        notification.getServiceReference());
   }
 
   @Transactional
@@ -168,6 +143,28 @@ public class NotificationService {
   }
 
   @Transactional
+  public void markProcessing(UUID id) {
+    Notification notification = findNotificationById(id);
+    notification.markProcessing();
+    repository.save(notification);
+
+    log.info(
+        "Notification marked PROCESSING - id={} serviceReference={}",
+        id,
+        notification.getServiceReference());
+  }
+
+  @Transactional(readOnly = true)
+  public Page<NotificationSummaryResponse> search(NotificationFilter filter) {
+    Specification<Notification> specification =
+        NotificationSpecifications.buildSpecification(filter);
+    Pageable pageable =
+        FilterUtilities.buildPageable(filter, NotificationSpecifications.ALLOWED_SORT_FIELDS);
+
+    return repository.findAll(specification, pageable).map(mapper::toSummaryResponse);
+  }
+
+  @Transactional
   public void scheduleRetry(UUID id) {
     Notification notification = findNotificationById(id);
     notification.scheduleRetry();
@@ -183,7 +180,8 @@ public class NotificationService {
     Template template =
         templateService.findByChannelAndName(request.channel(), request.templateName());
 
-    Map<String, Serializable> variables = templateVariableEnricher.enrich(request);
+    Map<String, Serializable> variables =
+        variableEnricher.enrich(request, template.getVariableDefinitions());
 
     String messageBody =
         templateProcessor.render(

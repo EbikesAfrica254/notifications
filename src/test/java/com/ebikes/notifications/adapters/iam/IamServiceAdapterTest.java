@@ -26,6 +26,7 @@ import org.springframework.web.client.RestClientException;
 import com.ebikes.notifications.dtos.adapters.iam.UserDetails;
 import com.ebikes.notifications.dtos.responses.api.SuccessResponse;
 import com.ebikes.notifications.exceptions.ExternalServiceException;
+import com.ebikes.notifications.support.fixtures.SecurityFixtures;
 
 @DisplayName("IamServiceAdapter")
 @ExtendWith(MockitoExtension.class)
@@ -61,7 +62,9 @@ class IamServiceAdapterTest {
     @DisplayName("should return users from successful response")
     @SuppressWarnings("unchecked")
     void shouldReturnUsers() {
-      List<UserDetails> users = List.of(new UserDetails(USER_ID, "Jane", "Doe", "jane.doe"));
+      List<UserDetails> users =
+          List.of(
+              new UserDetails(USER_ID, SecurityFixtures.TEST_USER_ID, "Jane", "Doe", "jane.doe"));
       when(responseSpec.body(any(ParameterizedTypeReference.class)))
           .thenReturn(SuccessResponse.of(users));
 

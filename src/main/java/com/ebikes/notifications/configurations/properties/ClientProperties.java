@@ -3,27 +3,24 @@ package com.ebikes.notifications.configurations.properties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 @Component
 @ConfigurationProperties(prefix = "clients")
-@Getter
-@Setter
+@Data
 public class ClientProperties {
-  private ClientConfiguration client;
-  private OpsConfiguration ops;
 
-  @Getter
-  @Setter
-  public static class ClientConfiguration {
-    private String baseUrl;
-    private String supportUrl;
+  private AssetsConfiguration assets = new AssetsConfiguration();
+  private ClientConfiguration client = new ClientConfiguration();
+  private ClientConfiguration ops = new ClientConfiguration();
+
+  @Data
+  public static class AssetsConfiguration {
+    private String fallbackLogoUrl;
   }
 
-  @Getter
-  @Setter
-  public static class OpsConfiguration {
+  @Data
+  public static class ClientConfiguration {
     private String baseUrl;
   }
 }
