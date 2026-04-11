@@ -25,6 +25,52 @@ public final class NotificationRequestFixtures {
         Map.of("name", FAKER.name().firstName()));
   }
 
+  public static NotificationRequest organizationWelcome() {
+    return base(
+        ChannelType.EMAIL,
+        "organizations.organization.welcome-email-dispatched",
+        "ORGANIZATION_WELCOME",
+        null);
+  }
+
+  public static NotificationRequest organizationWelcome(Map<String, Serializable> variables) {
+    return base(
+        ChannelType.EMAIL,
+        "organizations.organization.welcome-email-dispatched",
+        "ORGANIZATION_WELCOME",
+        variables);
+  }
+
+  public static NotificationRequest organizationWelcomeWithoutOrganizationId() {
+    return new NotificationRequest(
+        null,
+        NotificationCategory.OPERATIONAL,
+        ChannelType.EMAIL,
+        "organizations.organization.welcome-email-dispatched",
+        null,
+        FAKER.internet().emailAddress(),
+        Source.serviceReference(),
+        UUID.randomUUID().toString(),
+        "ORGANIZATION_WELCOME",
+        null,
+        null);
+  }
+
+  public static NotificationRequest organizationWelcomeWithoutSubjectUserId() {
+    return new NotificationRequest(
+        null,
+        NotificationCategory.OPERATIONAL,
+        ChannelType.EMAIL,
+        "organizations.organization.welcome-email-dispatched",
+        UUID.randomUUID().toString(),
+        FAKER.internet().emailAddress(),
+        Source.serviceReference(),
+        null,
+        "ORGANIZATION_WELCOME",
+        null,
+        null);
+  }
+
   private static NotificationRequest base(
       ChannelType channel,
       String eventType,
@@ -32,7 +78,7 @@ public final class NotificationRequestFixtures {
       Map<String, Serializable> variables) {
     return new NotificationRequest(
         null,
-        NotificationCategory.SECURITY,
+        NotificationCategory.OPERATIONAL,
         channel,
         eventType,
         UUID.randomUUID().toString(),
