@@ -63,7 +63,7 @@ jobs:
       - name: Extract JAR layers
         run: |
           set -Eeuo pipefail
-          java -Djarmode=layertools -jar target/*.jar extract --destination extracted/
+          java -Djarmode=tools -jar target/*.jar extract --layers --destination extracted/
 
       - name: Prepare Docker build context artifact
         run: |
