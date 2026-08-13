@@ -22,9 +22,9 @@ import software.amazon.awssdk.services.ses.model.SendEmailResponse;
 import software.amazon.awssdk.services.ses.model.SesException;
 
 @ConditionalOnProperty(
-        prefix = "notification.channels.email",
-        name = "provider",
-        havingValue = "SES")
+    prefix = "notification.channels.email",
+    name = "provider",
+    havingValue = "SES")
 @RequiredArgsConstructor
 @Service
 @Slf4j
@@ -48,30 +48,30 @@ public class SesEmailAdapter implements EmailAdapter {
       log.debug("Sending email via SES - recipient={}", request.recipient());
 
       SendEmailRequest sesRequest =
-              SendEmailRequest.builder()
-                      .destination(d -> d.toAddresses(request.recipient()))
-                      .message(
-                              m ->
-                                      m.subject(c -> c.data(request.subject()))
-                                              .body(b -> b.html(c -> c.data(request.body()))))
-                      .source(properties.getChannels().getEmail().getSes().getSenderAddress())
-                      .build();
+          SendEmailRequest.builder()
+              .destination(d -> d.toAddresses(request.recipient()))
+              .message(
+                  m ->
+                      m.subject(c -> c.data(request.subject()))
+                          .body(b -> b.html(c -> c.data(request.body()))))
+              .source(properties.getChannels().getEmail().getSes().getSenderAddress())
+              .build();
 
       SendEmailResponse response = sesClient.sendEmail(sesRequest);
 
       log.info(
-              "Email sent via SES - messageId={} recipient={} cost={}",
-              response.messageId(),
-              request.recipient(),
-              COST_PER_EMAIL);
+          "Email sent via SES - messageId={} recipient={} cost={}",
+          response.messageId(),
+          request.recipient(),
+          COST_PER_EMAIL);
 
       return new ChannelResponse(
-              COST_PER_EMAIL,
-              COST_CURRENCY,
-              Map.of("provider", "aws-ses"),
-              response.messageId(),
-              ENDPOINT,
-              OffsetDateTime.now());
+          COST_PER_EMAIL,
+          COST_CURRENCY,
+          Map.of("provider", "aws-ses"),
+          response.messageId(),
+          ENDPOINT,
+          OffsetDateTime.now());
 
     } catch (SesException e) {
       String errorMessage = e.awsErrorDetails().errorMessage();
@@ -79,7 +79,7 @@ public class SesEmailAdapter implements EmailAdapter {
       log.error("SES email failed - recipient={} error={}", request.recipient(), errorMessage, e);
 
       throw new ExternalServiceException(
-              ENDPOINT, errorMessage, ResponseCode.EXTERNAL_SERVICE_ERROR, e);
+          ENDPOINT, errorMessage, ResponseCode.EXTERNAL_SERVICE_ERROR, e);
     }
   }
 }

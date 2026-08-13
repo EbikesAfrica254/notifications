@@ -45,8 +45,7 @@ public class NotificationProperties {
     @Valid private Ses ses = new Ses();
     @Valid private Smtp smtp = new Smtp();
 
-    @AssertTrue(message = "SES configuration is required when provider is SES")
-    private boolean isSesConfigValid() {
+    @AssertTrue(message = "SES configuration is required when provider is SES") private boolean isSesConfigValid() {
       if (provider != EmailProvider.SES) {
         return true;
       }
@@ -57,8 +56,7 @@ public class NotificationProperties {
           && !ses.getSenderAddress().isBlank();
     }
 
-    @AssertTrue(message = "SMTP configuration is required when provider is SMTP")
-    private boolean isSmtpConfigValid() {
+    @AssertTrue(message = "SMTP configuration is required when provider is SMTP") private boolean isSmtpConfigValid() {
       if (provider != EmailProvider.SMTP) {
         return true;
       }

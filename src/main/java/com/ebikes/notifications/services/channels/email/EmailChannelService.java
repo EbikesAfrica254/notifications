@@ -14,9 +14,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @ConditionalOnProperty(
-        prefix = "notification.channels.email",
-        name = "enabled",
-        havingValue = "true")
+    prefix = "notification.channels.email",
+    name = "enabled",
+    havingValue = "true")
 @RequiredArgsConstructor
 @Service
 @Slf4j
@@ -34,9 +34,9 @@ public class EmailChannelService implements ChannelService {
     log.debug("Routing email request to provider - recipient={}", notification.getRecipient());
 
     return emailProvider.send(
-            new EmailRequest(
-                    notification.getMessageBody(),
-                    notification.getRecipient(),
-                    notification.getMessageSubject()));
+        new EmailRequest(
+            notification.getMessageBody(),
+            notification.getRecipient(),
+            notification.getMessageSubject()));
   }
 }

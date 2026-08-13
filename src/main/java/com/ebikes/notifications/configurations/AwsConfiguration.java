@@ -18,9 +18,9 @@ import software.amazon.awssdk.services.ses.SesClientBuilder;
 
 @Configuration
 @ConditionalOnProperty(
-        prefix = "notification.channels.email",
-        name = "provider",
-        havingValue = "SES")
+    prefix = "notification.channels.email",
+    name = "provider",
+    havingValue = "SES")
 @RequiredArgsConstructor
 @Slf4j
 public class AwsConfiguration {
@@ -32,9 +32,9 @@ public class AwsConfiguration {
   public SesClient sesClient() {
     NotificationProperties.Ses ses = notificationProperties.getChannels().getEmail().getSes();
     SesClientBuilder builder =
-            SesClient.builder()
-                    .region(Region.of(ses.getRegion()))
-                    .credentialsProvider(DefaultCredentialsProvider.builder().build());
+        SesClient.builder()
+            .region(Region.of(ses.getRegion()))
+            .credentialsProvider(DefaultCredentialsProvider.builder().build());
     if (ses.getEndpoint() != null && !ses.getEndpoint().isEmpty()) {
       URI endpointUri = URI.create(ses.getEndpoint());
       builder.endpointOverride(endpointUri);
