@@ -15,11 +15,7 @@ import com.ebikes.notifications.services.channels.ChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@ConditionalOnProperty(
-    prefix = "notification.channels.sms",
-    name = "enabled",
-    havingValue = "true",
-    matchIfMissing = true)
+@ConditionalOnProperty(prefix = "notification.channels.sms", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 @Service
 @Slf4j

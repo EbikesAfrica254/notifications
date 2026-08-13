@@ -21,8 +21,7 @@ import tools.jackson.databind.ObjectMapper;
 @ConditionalOnProperty(
     prefix = "notification.channels.whatsapp",
     name = "enabled",
-    havingValue = "true",
-    matchIfMissing = true)
+    havingValue = "true")
 @RequiredArgsConstructor
 @Service
 @Slf4j
