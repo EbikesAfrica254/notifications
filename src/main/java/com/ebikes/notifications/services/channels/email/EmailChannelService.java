@@ -3,7 +3,7 @@ package com.ebikes.notifications.services.channels.email;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import com.ebikes.notifications.adapters.channels.email.SesEmailAdapter;
+import com.ebikes.notifications.adapters.channels.email.EmailAdapter;
 import com.ebikes.notifications.database.entities.Notification;
 import com.ebikes.notifications.dtos.requests.channels.email.EmailRequest;
 import com.ebikes.notifications.dtos.responses.channels.ChannelResponse;
@@ -16,14 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(
     prefix = "notification.channels.email",
     name = "enabled",
-    havingValue = "true",
-    matchIfMissing = true)
+    havingValue = "true")
 @RequiredArgsConstructor
 @Service
 @Slf4j
 public class EmailChannelService implements ChannelService {
 
-  private final SesEmailAdapter emailProvider;
+  private final EmailAdapter emailProvider;
 
   @Override
   public ChannelType getChannelType() {

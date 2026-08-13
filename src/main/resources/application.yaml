@@ -139,11 +139,22 @@ notification:
   channels:
     email:
       enabled: ${EMAIL_ENABLED:true}
+      provider: ${EMAIL_PROVIDER:SMTP}
       rate-limit: 500
       ses:
         endpoint: ${AWS_SES_ENDPOINT:}
         region: ${AWS_SES_REGION}
         sender-address: ${AWS_SES_SENDER_ADDRESS}
+      smtp:
+        connection-timeout: ${SMTP_CONNECTION_TIMEOUT:5000}
+        host: ${SMTP_HOST}
+        password: ${SMTP_PASSWORD}
+        port: ${SMTP_PORT}
+        sender-address: ${SMTP_SENDER_ADDRESS}
+        ssl-enabled: ${SMTP_SSL_ENABLED:true}
+        timeout: ${SMTP_TIMEOUT:3000}
+        username: ${SMTP_USERNAME}
+        write-timeout: ${SMTP_WRITE_TIMEOUT:5000}
     sms:
       enabled: ${SMS_ENABLED:true}
       rate-limit: 100
@@ -154,7 +165,7 @@ notification:
     sse:
       connection-limit: 1000
       connection-timeout: 600000
-      enabled: true
+      enabled: ${SES_ENABLED:true}
       heartbeat-interval: PT30S
       rate-limit: 1000
     whatsapp:

@@ -205,7 +205,7 @@ public class NotificationService {
         .messageBody(messageBody)
         .messageSubject(messageSubject)
         .organizationId(request.organizationId())
-        .recipient(RecipientMaskingUtility.mask(request.recipient()))
+        .recipient(request.recipient())
         .serviceReference(request.serviceReference())
         .status(NotificationStatus.PENDING)
         .template(template)

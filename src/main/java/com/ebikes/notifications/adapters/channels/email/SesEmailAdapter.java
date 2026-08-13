@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import com.ebikes.notifications.configurations.properties.NotificationProperties;
@@ -20,6 +21,10 @@ import software.amazon.awssdk.services.ses.model.SendEmailRequest;
 import software.amazon.awssdk.services.ses.model.SendEmailResponse;
 import software.amazon.awssdk.services.ses.model.SesException;
 
+@ConditionalOnProperty(
+    prefix = "notification.channels.email",
+    name = "provider",
+    havingValue = "SES")
 @RequiredArgsConstructor
 @Service
 @Slf4j
