@@ -126,13 +126,18 @@ spring:
         concurrency-limit: 4
 
 cache:
-  organization:
+  iam:
+    ttl-minutes: 30
+    key-prefix: notifications
+  organizations:
     ttl-minutes: 30
     key-prefix: notifications
 
 clients:
+  assets:
+    fallback-logo-url: https://placehold.co/600x400
   client:
-    support-url: http://localhost:0/support
+    base-url: http://localhost:0/support
   ops:
     base-url: http://localhost:0/ops
 
@@ -159,11 +164,22 @@ notification:
   channels:
     email:
       enabled: false
+      provider: ses
       rate-limit: 500
       ses:
         endpoint: ""
         region: us-east-1
         sender-address: test@sender.test
+      smtp:
+        connection-timeout: 5000
+        host: mail.localhost.com
+        password: ""
+        port: 465
+        sender-address: test@sender.test
+        ssl-enabled: true
+        timeout: 3000
+        username: test@sender.test
+        write-timeout: 5000
     sms:
       enabled: false
       rate-limit: 100
