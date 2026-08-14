@@ -84,10 +84,6 @@ jobs:
             ! -path 'image-context/extracted/application/*' \
             ! -path 'image-context/extracted/dependencies' \
             ! -path 'image-context/extracted/dependencies/*' \
-            ! -path 'image-context/extracted/spring-boot-loader' \
-            ! -path 'image-context/extracted/spring-boot-loader/*' \
-            ! -path 'image-context/extracted/snapshot-dependencies' \
-            ! -path 'image-context/extracted/snapshot-dependencies/*' \
             | grep -q .
           then
             echo "::error::Unexpected files found in Docker build context"
