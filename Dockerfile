@@ -9,8 +9,6 @@ WORKDIR /app
 RUN mkdir -p /app/logs && chown -R appuser:appgroup /app
 
 COPY extracted/dependencies/ ./
-COPY extracted/spring-boot-loader/ ./
-COPY extracted/snapshot-dependencies/ ./
 COPY extracted/application/ ./
 
 ENV TZ=Africa/Nairobi
