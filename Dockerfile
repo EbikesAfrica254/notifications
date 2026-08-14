@@ -25,7 +25,7 @@ ENTRYPOINT ["java", \
   "-XX:+UseG1GC", \
   "-XX:+ExitOnOutOfMemoryError"]
 
-CMD ["org.springframework.boot.loader.launch.JarLauncher"]
+CMD ["-jar", "notifications-0.0.1-SNAPSHOT.jar"]
 
 ARG BUILD_DATE
 ARG VCS_REF
