@@ -8,7 +8,7 @@
 .env.local
 .env.*.local
 
-# Build output — not needed, builder stage uses mvn directly
+# Build output
 target/
 
 # IDE
@@ -21,10 +21,10 @@ target/
 .classpath
 .project
 
-# CI/CD — not needed inside image
+# CI/CD
 .github/
 
-# Local tooling — not needed inside image
+# Local tooling
 checkstyle/
 mvnw.cmd
 
@@ -41,6 +41,9 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Docker files themselves
+# Docker files
 Dockerfile
 .dockerignore
+
+# Local extraction — included in build context intentionally
+# extracted/ is NOT ignored%
