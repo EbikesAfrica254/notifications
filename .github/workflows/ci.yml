@@ -81,13 +81,7 @@ jobs:
           test -d extracted/spring-boot-loader
 
           cp Dockerfile docker-build-context/
-          cp -R extracted/application docker-build-context/
-          cp -R extracted/dependencies docker-build-context/
-          cp -R extracted/spring-boot-loader docker-build-context/
-
-          if [ -d extracted/snapshot-dependencies ]; then
-            cp -R extracted/snapshot-dependencies docker-build-context/
-          fi
+          cp -R extracted docker-build-context/
 
           find docker-build-context -maxdepth 2 | sort
 
