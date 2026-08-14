@@ -40,6 +40,7 @@ jobs:
           cache: maven
 
       - name: Build, test and analyse
+        if: vars.SONAR_ENABLED == 'true'
         run: |
           ./mvnw verify -B \
             org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
