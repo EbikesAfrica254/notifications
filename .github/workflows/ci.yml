@@ -39,10 +39,13 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Build, test and analyse
+      - name: Build and test
+        run: ./mvnw verify -B
+
+      - name: Analyse with Sonar
+        if: vars.SONAR_ENABLED == 'true'
         run: |
-          ./mvnw verify -B \
-            org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+          ./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }} \
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
