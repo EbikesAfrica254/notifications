@@ -78,7 +78,6 @@ jobs:
           test -f Dockerfile
           test -d extracted/application
           test -d extracted/dependencies
-          test -d extracted/spring-boot-loader
 
           cp Dockerfile docker-build-context/
           cp -R extracted docker-build-context/
