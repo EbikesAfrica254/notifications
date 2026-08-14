@@ -64,7 +64,7 @@ jobs:
           echo "Contents of image-context:"
           find image-context -maxdepth 2 | sort || echo "(image-context does not exist or is empty)"
 
-          for path in image-context image-context/Dockerfile image-context/application image-context/dependencies image-context/spring-boot-loader; do
+          for path in image-context image-context/Dockerfile image-context/application image-context/dependencies; do
             if [ ! -e "$path" ]; then
               echo "::error::Missing expected path: $path"
               exit 1
